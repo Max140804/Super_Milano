@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.unity3d.player"
+    xmlns:tools="http://schemas.android.com/tools">
+    
+    <application>
+        <activity android:name="com.unity3d.player.UnityPlayerActivity"
+                  android:theme="@style/UnityThemeSelector">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
+        </activity>
+
+        <!-- Add these meta-data entries for Firebase and Google Sign-In -->
+        <meta-data android:name="com.google.android.gms.version"
+                   android:value="@integer/google_play_services_version" />
+        <meta-data android:name="com.google.android.gms.appid"
+                   android:value="@string/google_app_id" />
+        <meta-data android:name="com.google.android.gms.auth.api.signin.CLIENT_ID"
+                   android:value="@string/981360111670-hhs97pmq28h6o3jrbnv5ft9l31jh04ar.apps.googleusercontent.com" />
+    </application>
+
+    <!-- Add these permissions -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+</manifest>

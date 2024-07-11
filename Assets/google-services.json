@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "981360111670",
+    "firebase_url": "https://super-milano-default-rtdb.firebaseio.com",
+    "project_id": "super-milano",
+    "storage_bucket": "super-milano.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:981360111670:android:ca52889d78785dc001e897",
+        "android_client_info": {
+          "package_name": "com.naditol.supermilano"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "981360111670-ss6ll8itngjl0titptidj8hgeijdcitc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.naditol.supermilano",
+            "certificate_hash": "31265adf01d12b51e5b8e5907e13657434c79706"
+          }
+        },
+        {
+          "client_id": "981360111670-hhs97pmq28h6o3jrbnv5ft9l31jh04ar.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOcjH5NPlwEcQuhQEwPSuH5prodC2zDEg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "981360111670-hhs97pmq28h6o3jrbnv5ft9l31jh04ar.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
