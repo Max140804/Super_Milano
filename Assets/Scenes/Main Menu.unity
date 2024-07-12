@@ -18377,7 +18377,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 1636957250}
         m_TargetAssemblyTypeName: MainMenu, Assembly-CSharp
         m_MethodName: CreateAndJoinPrivateRoom
         m_Mode: 3
@@ -18440,7 +18440,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   translationName: create
-  FallbackSprite: {fileID: 0}
+  FallbackSprite: {fileID: 21300000, guid: bd952e71b0104b74a81681365ca04e3e, type: 3}
 --- !u!1 &604400576
 GameObject:
   m_ObjectHideFlags: 0
@@ -21085,7 +21085,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &667152616
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -29813,7 +29813,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 1636957250}
         m_TargetAssemblyTypeName: MainMenu, Assembly-CSharp
         m_MethodName: CreateAndJoinPrivateRoom
         m_Mode: 3
@@ -46386,7 +46386,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1620713527
 RectTransform:
   m_ObjectHideFlags: 0
