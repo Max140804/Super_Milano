@@ -16,6 +16,7 @@ using TMPro;
 
 public class MainMenu : MonoBehaviourPunCallbacks
 {
+    
     public string usernamee;
 
     // Main Menu UI elements
@@ -287,7 +288,7 @@ public class MainMenu : MonoBehaviourPunCallbacks
     {
         currentbid = unobid;
     }
-    public void setunobid(int bid)
+    public void setuno_bid(int bid)
     {
         if (bid == 42)
         {
@@ -314,7 +315,7 @@ public class MainMenu : MonoBehaviourPunCallbacks
         te.Copy();
     }
 
-    public void setdominobid(int bid)
+    public void setdomino_bid(int bid)
     {
         if (bid == 42)
         {
@@ -325,7 +326,7 @@ public class MainMenu : MonoBehaviourPunCallbacks
             dominobid = bid;
         }
     }
-    public void setbid(int bid)
+    public void set_bid(int bid)
     {
         if (bid == 42)
         {
@@ -341,11 +342,11 @@ public class MainMenu : MonoBehaviourPunCallbacks
     {
         players = unoplayers;
     }
-    public void setunoplayers(int playersss)
+    public void setuno_players(int playersss)
     {
         unoplayers = playersss;
     }
-    public void setplayers(int playersss)
+    public void set_players(int playersss)
     {
         players = playersss;
     }
@@ -379,7 +380,6 @@ public class MainMenu : MonoBehaviourPunCallbacks
 
     }
 
-
     private IEnumerator UpdateCoinsCoroutine(string playerId, float coins)
     {
         var task = databaseReference.Child(HelperClass.Encrypt("players", playerId)).Child(HelperClass.Encrypt(playerId, playerId)).Child(HelperClass.Encrypt("coins", playerId)).SetValueAsync(HelperClass.Encrypt(coins.ToString(), playerId));
@@ -395,8 +395,6 @@ public class MainMenu : MonoBehaviourPunCallbacks
         }
     }
 
-
-
     private IEnumerator Updatexp(string playerId, float xp)
     {
         var task = databaseReference.Child(HelperClass.Encrypt("players", playerId)).Child(HelperClass.Encrypt(playerId, playerId)).Child(HelperClass.Encrypt("XP", playerId)).SetValueAsync(HelperClass.Encrypt(xp.ToString(), playerId));
@@ -411,7 +409,6 @@ public class MainMenu : MonoBehaviourPunCallbacks
             Debug.Log("Coins updated successfully");
         }
     }
-
 
     public IEnumerator Getxp(string playerId)
     {
@@ -494,9 +491,9 @@ public class MainMenu : MonoBehaviourPunCallbacks
     }
     public IEnumerator UpdateTime(string playerId, string time, int streak)
     {
-        var task = databaseReference.Child(HelperClass.Encrypt("players", playerId)).Child(HelperClass.Encrypt(playerId, playerId)).Child(HelperClass.Encrypt("LastReward", playerId)).SetValueAsync(HelperClass.Encrypt(time,playerId));
+        var task = databaseReference.Child(HelperClass.Encrypt("players", playerId)).Child(HelperClass.Encrypt(playerId, playerId)).Child(HelperClass.Encrypt("LastReward", playerId)).SetValueAsync(HelperClass.Encrypt(time, playerId));
         yield return new WaitUntil(() => task.IsCompleted);
-        var task2 = databaseReference.Child(HelperClass.Encrypt("players", playerId)).Child(HelperClass.Encrypt(playerId, playerId)).Child(HelperClass.Encrypt("DailyStreak", playerId)).SetValueAsync(HelperClass.Encrypt(streak.ToString(),playerId));
+        var task2 = databaseReference.Child(HelperClass.Encrypt("players", playerId)).Child(HelperClass.Encrypt(playerId, playerId)).Child(HelperClass.Encrypt("DailyStreak", playerId)).SetValueAsync(HelperClass.Encrypt(streak.ToString(), playerId));
         yield return new WaitUntil(() => task2.IsCompleted);
 
         if (task.Exception != null)
@@ -542,8 +539,6 @@ public class MainMenu : MonoBehaviourPunCallbacks
 
         }
     }
-
-
     private IEnumerator UpdateLevelCoroutine(string playerId, int level)
     {
         var task = databaseReference.Child(HelperClass.Encrypt("players", playerId)).Child(HelperClass.Encrypt(playerId, playerId)).Child(HelperClass.Encrypt("level", playerId)).SetValueAsync(HelperClass.Encrypt(level.ToString(), playerId));
@@ -578,7 +573,6 @@ public class MainMenu : MonoBehaviourPunCallbacks
             // Do something with the retrieved coins, e.g., update UI
         }
     }
-
     public IEnumerator GetPlayerCoins(string playerId)
     {
         var task = databaseReference.Child(HelperClass.Encrypt("players", playerId)).Child(HelperClass.Encrypt(playerId, playerId)).Child(HelperClass.Encrypt("coins", playerId)).GetValueAsync();
@@ -599,7 +593,6 @@ public class MainMenu : MonoBehaviourPunCallbacks
             // Do something with the retrieved coins, e.g., update UI
         }
     }
-
     public void GetUsername(string playerId)
     {
         FirebaseUser user = auth.CurrentUser;
@@ -625,14 +618,11 @@ public class MainMenu : MonoBehaviourPunCallbacks
 
 
     }
-
-
     public void LogoutUser()
     {
         auth.SignOut();
         //SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
-
     public async void RegisterUser()
     {
         string email = regEmailInputField.text;
@@ -777,7 +767,7 @@ public class MainMenu : MonoBehaviourPunCallbacks
         PhotonNetwork.AutomaticallySyncScene = true;
     }
 
-    public void JoinRandom_Room(int num)
+    public void JoinRandomRoom(int num)
     {
         StartCoroutine(JoinRandomRoomCoroutine(num));
     }
@@ -1070,12 +1060,12 @@ public class MainMenu : MonoBehaviourPunCallbacks
             coins -= currentbid;
         }
 
-        if(players == 2)
+        if (players == 2)
         {
             roomGO1v1.SetActive(true);
             roomGo1v1RoomName.text = "Room Name: " + PhotonNetwork.CurrentRoom.Name;
         }
-        else if(players == 4)
+        else if (players == 4)
         {
             roomGO2v2.SetActive(true);
             roomGo2v2RoomName.text = "Room Name: " + PhotonNetwork.CurrentRoom.Name;
@@ -1154,11 +1144,11 @@ public class MainMenu : MonoBehaviourPunCallbacks
 
         if (PhotonNetwork.IsMasterClient && PhotonNetwork.CurrentRoom.PlayerCount == players)
         {
-            if(players == 2)
+            if (players == 2)
             {
                 playButton1v1.SetActive(true);
             }
-            else if(players == 4)
+            else if (players == 4)
             {
                 playButton2v2.SetActive(true);
             }
@@ -1198,7 +1188,7 @@ public class MainMenu : MonoBehaviourPunCallbacks
         }
         playersInRoom.Clear();
 
-        if(PhotonNetwork.CurrentRoom == null)
+        if (PhotonNetwork.CurrentRoom == null)
         {
             return;
         }
@@ -1207,7 +1197,7 @@ public class MainMenu : MonoBehaviourPunCallbacks
         {
             PlayerDisplay newPlayer = null;
 
-            if(players == 2)
+            if (players == 2)
             {
                 newPlayer = Instantiate(playerPrefab, displayParent1v1);
                 newPlayer.SetPlayerInfo(player.Value);
