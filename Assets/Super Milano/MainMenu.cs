@@ -346,7 +346,7 @@ public class MainMenu : MonoBehaviourPunCallbacks
     {
         unoplayers = playersss;
     }
-    public void set_players(int playersss)
+    public void setplayers(int playersss)
     {
         players = playersss;
     }
