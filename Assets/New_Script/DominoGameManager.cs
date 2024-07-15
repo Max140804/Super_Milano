@@ -1,12 +1,13 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Photon.Pun;
 
 public class DominoGameManager : MonoBehaviour
 {
-    public GameObject dominoPrefab; // Reference to the prefab
-    public DominoCard[] dominoCards; // Array of all possible domino cards
-    public Transform spawnGB; // Parent GameObject for spawning domino cards
-    public int tilesPerPlayer = 7; // Number of tiles per player
+    public GameObject dominoPrefab;
+    public DominoCard[] dominoCards;
+    public Transform spawnGB;
+    public int tilesPerPlayer = 7;
 
     private List<GameObject> allDominoes = new List<GameObject>();
     private List<DominoHand> players = new List<DominoHand>();
@@ -14,27 +15,23 @@ public class DominoGameManager : MonoBehaviour
 
     void Start()
     {
-        // Create and assign data to domino cards
+        
         for (int i = 0; i < dominoCards.Length; i++)
         {
             GameObject domino = CreateDominoCard(dominoCards[i]);
             allDominoes.Add(domino);
         }
 
-        // Find players and the boneyard
         players.AddRange(FindObjectsOfType<DominoHand>());
         boneYard = FindObjectOfType<DominoBoneYard>();
 
-        // Shuffle and deal the dominoes
         DealDominoes();
     }
 
     GameObject CreateDominoCard(DominoCard cardData)
     {
-        // Instantiate the prefab
         GameObject dominoInstance = Instantiate(dominoPrefab, spawnGB);
 
-        // Get the CardData component and assign the card data
         CardData cardDataComponent = dominoInstance.GetComponent<CardData>();
         if (cardDataComponent != null)
         {
@@ -50,10 +47,8 @@ public class DominoGameManager : MonoBehaviour
 
     void DealDominoes()
     {
-        // Shuffle the dominoes
         Shuffle(allDominoes);
 
-        // Deal the tiles
         int currentDominoIndex = 0;
 
         for (int i = 0; i < tilesPerPlayer; i++)
@@ -63,10 +58,10 @@ public class DominoGameManager : MonoBehaviour
                 if (currentDominoIndex < allDominoes.Count)
                 {
                     GameObject domino = allDominoes[currentDominoIndex];
-                    domino.transform.SetParent(player.transform, false); // Set as child of the DominoHand GameObject
-                    domino.transform.localPosition = Vector3.zero; // Reset local position
-                    domino.transform.localRotation = Quaternion.identity; // Reset local rotation
-                    domino.transform.localScale = Vector3.one; // Reset local scale
+                    domino.transform.SetParent(player.transform, false);
+                    domino.transform.localPosition = Vector3.zero;
+                    domino.transform.localRotation = Quaternion.identity;
+                    domino.transform.localScale = Vector3.one;
                     player.AddToHand(domino);
                     currentDominoIndex++;
                 }
@@ -77,10 +72,10 @@ public class DominoGameManager : MonoBehaviour
         for (int i = currentDominoIndex; i < allDominoes.Count; i++)
         {
             GameObject domino = allDominoes[i];
-            domino.transform.SetParent(boneYard.transform, false); // Set as child of the DominoBoneYard GameObject
-            domino.transform.localPosition = Vector3.zero; // Reset local position
-            domino.transform.localRotation = Quaternion.identity; // Reset local rotation
-            domino.transform.localScale = Vector3.one; // Reset local scale
+            domino.transform.SetParent(boneYard.transform, false);
+            domino.transform.localPosition = Vector3.zero;
+            domino.transform.localRotation = Quaternion.identity;
+            domino.transform.localScale = Vector3.one;
             boneYard.AddToBoneYard(domino);
         }
     }
