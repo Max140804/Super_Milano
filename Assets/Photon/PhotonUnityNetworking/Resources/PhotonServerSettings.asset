@@ -55,6 +55,7 @@ MonoBehaviour:
   - UNO
   - shuf
   - startgame
+  - RPC_SetPlayerName
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 0
