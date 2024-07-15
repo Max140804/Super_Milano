@@ -6,9 +6,12 @@ public class DominoBoneYard : MonoBehaviour
     private List<GameObject> boneyard = new List<GameObject>();
     private DominoGameManager gameManager;
 
+    public Animator anim;
+
     private void Awake()
     {
         gameManager = FindObjectOfType<DominoGameManager>();
+        
     }
 
     public void AddToBoneYard(GameObject domino)
@@ -102,5 +105,15 @@ public class DominoBoneYard : MonoBehaviour
         {
             addButton.SetActive(active);
         }
+    }
+
+    public void OpenBoneYard()
+    {
+        anim.Play("Open");
+    }
+
+    public void CloseBoneYard()
+    {
+        anim.Play("Close");
     }
 }
