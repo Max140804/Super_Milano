@@ -56,6 +56,8 @@ MonoBehaviour:
   - shuf
   - startgame
   - RPC_SetPlayerName
+  - RPC_SetCurrentPlayerIndex
+  - RPC_RequestCurrentPlayerIndex
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 0

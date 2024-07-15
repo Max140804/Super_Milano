@@ -11,7 +11,6 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     private Transform originalParent;
     private DominoHand originalHand;
     private DominoBoneYard originalBoneYard;
-    private DominoGameManager gameManager;
 
     private Vector3 offset;
 
@@ -25,15 +24,15 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         canvasGroup = GetComponent<CanvasGroup>();
         grid = FindObjectOfType<Grid>();
         cardData = GetComponent<CardData>();
-        gameManager = FindObjectOfType<DominoGameManager>();
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        if (!TurnManager.Instance.IsMyTurn()) return;
+
         canvasGroup.alpha = 0.6f;
         canvasGroup.blocksRaycasts = false;
 
-        
         Vector3 worldMousePos;
         RectTransformUtility.ScreenPointToWorldPointInRectangle(rectTransform, eventData.position, canvas.worldCamera, out worldMousePos);
         offset = rectTransform.position - worldMousePos;
@@ -45,6 +44,8 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
     public void OnDrag(PointerEventData eventData)
     {
+        if (!TurnManager.Instance.IsMyTurn()) return;
+
         Vector3 worldMousePos;
         RectTransformUtility.ScreenPointToWorldPointInRectangle(rectTransform, eventData.position, canvas.worldCamera, out worldMousePos);
         rectTransform.position = worldMousePos + offset;
@@ -52,6 +53,8 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        if (!TurnManager.Instance.IsMyTurn()) return;
+
         canvasGroup.alpha = 1f;
         canvasGroup.blocksRaycasts = true;
 
@@ -68,6 +71,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
                 if (grid.IsValidCellIndex(cellIndex))
                 {
                     SnapToCells(cellIndex);
+                    TurnManager.Instance.EndTurn();
                 }
                 else
                 {
@@ -93,7 +97,6 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         Vector2Int topHalfCellIndex = cellIndex;
         Vector2Int bottomHalfCellIndex = GetBottomHalfCellIndex(cellIndex);
 
-        
         if (CanSnapToCell(topHalfCellIndex))
         {
             SnapToCell(topHalf, topHalfCellIndex);
@@ -101,14 +104,12 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
             grid.LockCell(topHalfCellIndex);
         }
 
-    
         if (CanSnapToCell(bottomHalfCellIndex))
         {
             SnapToCell(bottomHalf, bottomHalfCellIndex);
             grid.LockCell(bottomHalfCellIndex);
         }
 
-     
         if (originalHand != null)
         {
             originalHand.RemoveFromHand(gameObject);
