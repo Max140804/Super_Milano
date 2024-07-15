@@ -33,12 +33,11 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         canvasGroup.alpha = 0.6f;
         canvasGroup.blocksRaycasts = false;
 
-        // Calculate the offset from the center of the card to the mouse position
+        
         Vector3 worldMousePos;
         RectTransformUtility.ScreenPointToWorldPointInRectangle(rectTransform, eventData.position, canvas.worldCamera, out worldMousePos);
         offset = rectTransform.position - worldMousePos;
 
-        // Store the original parent and its type
         originalParent = transform.parent;
         originalHand = originalParent.GetComponentInParent<DominoHand>();
         originalBoneYard = originalParent.GetComponentInParent<DominoBoneYard>();
@@ -94,7 +93,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         Vector2Int topHalfCellIndex = cellIndex;
         Vector2Int bottomHalfCellIndex = GetBottomHalfCellIndex(cellIndex);
 
-        // Snap the top half if valid
+        
         if (CanSnapToCell(topHalfCellIndex))
         {
             SnapToCell(topHalf, topHalfCellIndex);
@@ -102,14 +101,14 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
             grid.LockCell(topHalfCellIndex);
         }
 
-        // Snap the bottom half if valid
+    
         if (CanSnapToCell(bottomHalfCellIndex))
         {
             SnapToCell(bottomHalf, bottomHalfCellIndex);
             grid.LockCell(bottomHalfCellIndex);
         }
 
-        // Remove the card from the original hand or boneyard
+     
         if (originalHand != null)
         {
             originalHand.RemoveFromHand(gameObject);

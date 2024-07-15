@@ -4,11 +4,11 @@ public class Grid : MonoBehaviour
 {
     public int rows = 10;
     public int columns = 20;
-    public float cellWidth = 50f;  // Width of each cell
-    public float cellHeight = 50f; // Height of each cell
+    public float cellWidth = 50f;  
+    public float cellHeight = 50f;
     public GameObject cellPrefab;
     private GameObject[,] gridArray;
-    private GameObject[,] occupiedObjects; // Track the object in each cell
+    private GameObject[,] occupiedObjects;
 
     private void Start()
     {
@@ -29,11 +29,7 @@ public class Grid : MonoBehaviour
             if (IsValidCellIndex(cellIndex))
             {
                 Debug.Log($"Clicked on cell {cellIndex}");
-
-                // Example: Locking a cell
                 LockCell(cellIndex);
-
-                // Example: Updating values in a cell
                 UpdateCellTopValue(cellIndex, 10);
                 UpdateCellBottomValue(cellIndex, 5);
             }
@@ -60,11 +56,11 @@ public class Grid : MonoBehaviour
             {
                 GameObject cell = Instantiate(cellPrefab, transform);
                 RectTransform cellRectTransform = cell.GetComponent<RectTransform>();
-                cellRectTransform.sizeDelta = new Vector2(cellWidth, cellHeight);  // Set cell size here
+                cellRectTransform.sizeDelta = new Vector2(cellWidth, cellHeight);
                 cellRectTransform.anchoredPosition = new Vector2((col * cellWidth) - xOffset, -(row * cellHeight) + yOffset);
                 cell.name = $"Cell_{row}_{col}";
                 gridArray[row, col] = cell;
-                occupiedObjects[row, col] = null; // Initialize as not occupied
+                occupiedObjects[row, col] = null;
             }
         }
     }
@@ -75,7 +71,7 @@ public class Grid : MonoBehaviour
         {
             for (int col = 0; col < columns; col++)
             {
-                occupiedObjects[row, col] = null; // Initialize all cells as not occupied
+                occupiedObjects[row, col] = null;
             }
         }
     }
@@ -99,20 +95,17 @@ public class Grid : MonoBehaviour
 
         if (IsValidCellIndex(cellIndex))
         {
-            if (!IsCellLocked(cellIndex)) // Check if the cell is not already occupied
+            if (!IsCellLocked(cellIndex))
             {
                 GameObject cell = gridArray[cellIndex.y, cellIndex.x];
-
-                // Determine neighboring cells to snap to
                 Vector2Int[] neighborIndices = new Vector2Int[1];
                 neighborIndices[0] = cellIndex;
 
                 if (snapToHorizontalNeighbors)
                 {
-                    // Snap to both left and right neighbors
                     neighborIndices = new Vector2Int[2];
-                    neighborIndices[0] = cellIndex + new Vector2Int(-1, 0); // Left neighbor
-                    neighborIndices[1] = cellIndex + new Vector2Int(1, 0);  // Right neighbor
+                    neighborIndices[0] = cellIndex + new Vector2Int(-1, 0); 
+                    neighborIndices[1] = cellIndex + new Vector2Int(1, 0);
                 }
 
                 // Find the nearest neighbor cell
@@ -121,20 +114,14 @@ public class Grid : MonoBehaviour
                 if (IsValidCellIndex(nearestCellIndex))
                 {
                     RectTransform nearestCellRectTransform = GetCellRectTransform(nearestCellIndex);
-
-                    // Snap the object to the center of the nearest cell
                     objRectTransform.SetParent(nearestCellRectTransform, false);
                     objRectTransform.anchoredPosition = Vector3.zero;
-
-                    // Calculate the size of the object in grid cells
                     Vector2Int objCellSize = CalculateCardCellSize(obj);
-
-                    // Mark the cells as occupied by this object
                     MarkCellsOccupied(nearestCellIndex, objCellSize, obj);
 
                     Debug.Log($"Snapped object to cell {nearestCellIndex}");
 
-                    return true; // Successfully attached object to grid
+                    return true;
                 }
                 else
                 {
@@ -151,7 +138,7 @@ public class Grid : MonoBehaviour
             Debug.LogError("Invalid cell index");
         }
 
-        return false; // Failed to attach object to grid
+        return false;
     }
 
     private void MarkCellsOccupied(Vector2Int startCellIndex, Vector2Int objCellSize, GameObject obj)
@@ -171,7 +158,7 @@ public class Grid : MonoBehaviour
         {
             return occupiedObjects[cellIndex.y, cellIndex.x] != null;
         }
-        return false; // Invalid cell index
+        return false; 
     }
 
     public void LockCell(Vector2Int cellIndex)
@@ -274,7 +261,7 @@ public class Grid : MonoBehaviour
         float cellY = cellIndex.y * cellHeight + cellHeight / 2f;
 
         Vector2 cellCenterWorld = new Vector2(cellX, cellY);
-        cellCenterWorld += (Vector2)transform.position; // Adjust for grid's position if necessary
+        cellCenterWorld += (Vector2)transform.position;
 
         return cellCenterWorld;
     }
@@ -328,11 +315,8 @@ public class Grid : MonoBehaviour
     {
         RectTransform cardRectTransform = cardObject.GetComponent<RectTransform>();
 
-        // Calculate the size of the card object in local units
         float cardWidth = cardRectTransform.rect.width;
         float cardHeight = cardRectTransform.rect.height;
-
-        // Calculate number of cells needed based on the card size
         int numCellsWide = Mathf.CeilToInt(cardWidth / cellWidth);
         int numCellsHigh = Mathf.CeilToInt(cardHeight / cellHeight);
 
@@ -358,7 +342,7 @@ public class Grid : MonoBehaviour
         {
             Debug.LogError($"No cell object found at {cellIndex}");
         }
-        return -1; // Return an invalid value or handle as needed
+        return -1;
     }
 
     public int GetBottomValueInCell(Vector2Int cellIndex)
@@ -380,7 +364,7 @@ public class Grid : MonoBehaviour
         {
             Debug.LogError($"No cell object found at {cellIndex}");
         }
-        return -1; // Return an invalid value or handle as needed
+        return -1;
     }
 
     public bool CanSnapHorizontally(Vector2Int cellIndex, int topValue, int bottomValue)
@@ -390,29 +374,22 @@ public class Grid : MonoBehaviour
 
         if (IsCellLocked(cellIndex))
             return false;
-
-        // Check left neighbor
         if (cellIndex.x > 0)
         {
             Vector2Int leftIndex = new Vector2Int(cellIndex.x - 1, cellIndex.y);
             int leftTopValue = GetTopValueInCell(leftIndex);
             int leftBottomValue = GetBottomValueInCell(leftIndex);
-
-            // Check if left neighbor matches the card's values or is uninitialized
             if (leftTopValue == topValue || leftTopValue == -1 || leftBottomValue == bottomValue || leftBottomValue == -1)
             {
                 return true;
             }
         }
-
-        // Check right neighbor
         if (cellIndex.x < columns - 1)
         {
             Vector2Int rightIndex = new Vector2Int(cellIndex.x + 1, cellIndex.y);
             int rightTopValue = GetTopValueInCell(rightIndex);
             int rightBottomValue = GetBottomValueInCell(rightIndex);
 
-            // Check if right neighbor matches the card's values or is uninitialized
             if (rightTopValue == topValue || rightTopValue == -1 || rightBottomValue == bottomValue || rightBottomValue == -1)
             {
                 return true;
@@ -430,28 +407,23 @@ public class Grid : MonoBehaviour
         if (IsCellLocked(cellIndex))
             return false;
 
-        // Check bottom neighbor
         if (cellIndex.y > 0)
         {
             Vector2Int bottomIndex = new Vector2Int(cellIndex.x, cellIndex.y - 1);
             int bottomTopValue = GetTopValueInCell(bottomIndex);
             int bottomBottomValue = GetBottomValueInCell(bottomIndex);
-
-            // Check if bottom neighbor matches the card's values or is uninitialized
             if (bottomTopValue == topValue || bottomTopValue == -1 || bottomBottomValue == bottomValue || bottomBottomValue == -1)
             {
                 return true;
             }
         }
 
-        // Check top neighbor
         if (cellIndex.y < rows - 1)
         {
             Vector2Int topIndex = new Vector2Int(cellIndex.x, cellIndex.y + 1);
             int topTopValue = GetTopValueInCell(topIndex);
             int topBottomValue = GetBottomValueInCell(topIndex);
 
-            // Check if top neighbor matches the card's values or is uninitialized
             if (topTopValue == topValue || topTopValue == -1 || topBottomValue == bottomValue || topBottomValue == -1)
             {
                 return true;

@@ -22,7 +22,6 @@ public class DominoBoneYard : MonoBehaviour
         domino.transform.localRotation = Quaternion.identity;
         domino.transform.localScale = Vector3.one;
 
-        // Enable the AddButton for this domino
         ToggleAddButton(domino, true);
     }
 
@@ -32,7 +31,6 @@ public class DominoBoneYard : MonoBehaviour
         {
             boneyard.Remove(domino);
 
-            // Disable the AddButton for this domino
             ToggleAddButton(domino, false);
 
             return true;
@@ -67,7 +65,6 @@ public class DominoBoneYard : MonoBehaviour
             boneYard.RemoveFromBoneYard(gameObject);
             hand.AddToHand(gameObject);
 
-            // Disable the AddButton for this domino
             ToggleAddButton(gameObject, false);
         }
         else

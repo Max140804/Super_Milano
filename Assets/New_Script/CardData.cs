@@ -5,8 +5,8 @@ public class CardData : MonoBehaviour
 {
     public DominoCard cardData;
 
-    private SpriteRenderer spriteRenderer; // For 2D sprite rendering
-    public Image image; // For UI image rendering
+    private SpriteRenderer spriteRenderer; 
+    public Image image;
     [HideInInspector] public int topValue;
     [HideInInspector] public int bottomValue;
     public bool isRotated;
@@ -72,15 +72,11 @@ public class CardData : MonoBehaviour
 
         if (boneYard != null && boneYard.Contains(this.gameObject))
         {
-            // Remove from boneyard
             boneYard.RemoveFromBoneYard(this.gameObject);
-
-            // Find the parent DominoHand
             DominoHand hand = FindObjectOfType<DominoHand>();
 
             if (hand != null)
             {
-                // Add to hand
                 hand.AddToHand(this.gameObject);
 
             }

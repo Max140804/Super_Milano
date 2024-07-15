@@ -13,7 +13,6 @@ public class Domino_Manager : MonoBehaviour
     public bool isntantiated; 
     public GameObject musicbackground;
     public GameObject soundbackground;
-    // Start is called before the first frame update
     void Awake()
     {
         if (PlayerPrefs.GetInt("music") == 1)
@@ -37,7 +36,6 @@ public class Domino_Manager : MonoBehaviour
         }
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (PhotonNetwork.IsConnectedAndReady && isntantiated == false)
