@@ -4,7 +4,7 @@ public class Grid : MonoBehaviour
 {
     public int rows = 10;
     public int columns = 20;
-    public float cellWidth = 50f;  
+    public float cellWidth = 50f;
     public float cellHeight = 50f;
     public GameObject cellPrefab;
     private GameObject[,] gridArray;
@@ -29,9 +29,6 @@ public class Grid : MonoBehaviour
             if (IsValidCellIndex(cellIndex))
             {
                 Debug.Log($"Clicked on cell {cellIndex}");
-                LockCell(cellIndex);
-                UpdateCellTopValue(cellIndex, 10);
-                UpdateCellBottomValue(cellIndex, 5);
             }
             else
             {
@@ -95,7 +92,7 @@ public class Grid : MonoBehaviour
 
         if (IsValidCellIndex(cellIndex))
         {
-            if (!IsCellLocked(cellIndex))
+            if (!IsCellLocked(cellIndex) && CanSnapToCell(cellIndex, obj))
             {
                 GameObject cell = gridArray[cellIndex.y, cellIndex.x];
                 Vector2Int[] neighborIndices = new Vector2Int[1];
@@ -104,7 +101,7 @@ public class Grid : MonoBehaviour
                 if (snapToHorizontalNeighbors)
                 {
                     neighborIndices = new Vector2Int[2];
-                    neighborIndices[0] = cellIndex + new Vector2Int(-1, 0); 
+                    neighborIndices[0] = cellIndex + new Vector2Int(-1, 0);
                     neighborIndices[1] = cellIndex + new Vector2Int(1, 0);
                 }
 
@@ -130,7 +127,7 @@ public class Grid : MonoBehaviour
             }
             else
             {
-                Debug.LogError($"Cell {cellIndex} is already occupied.");
+                Debug.LogError($"Cell {cellIndex} is already occupied or cannot be snapped to.");
             }
         }
         else
@@ -138,6 +135,26 @@ public class Grid : MonoBehaviour
             Debug.LogError("Invalid cell index");
         }
 
+        return false;
+    }
+
+    private bool CanSnapToCell(Vector2Int cellIndex, GameObject card)
+    {
+        if (IsValidCellIndex(cellIndex))
+        {
+            GameObject cellObject = gridArray[cellIndex.y, cellIndex.x];
+            Cell cellData = cellObject.GetComponent<Cell>();
+
+            if (cellData != null)
+            {
+                GetValue cardData = card.GetComponentInChildren<GetValue>();
+
+                if (cardData != null)
+                {
+                    return cellData.cellValue == cardData.topValue || cellData.cellValue == cardData.bottomValue || cellData.cellValue == -1;
+                }
+            }
+        }
         return false;
     }
 
@@ -158,7 +175,7 @@ public class Grid : MonoBehaviour
         {
             return occupiedObjects[cellIndex.y, cellIndex.x] != null;
         }
-        return false; 
+        return false;
     }
 
     public void LockCell(Vector2Int cellIndex)
@@ -174,64 +191,6 @@ public class Grid : MonoBehaviour
         if (IsValidCellIndex(cellIndex))
         {
             occupiedObjects[cellIndex.y, cellIndex.x] = null;
-        }
-    }
-
-    public void UpdateCellTopValue(Vector2Int cellIndex, int topValue)
-    {
-        if (IsValidCellIndex(cellIndex))
-        {
-            GameObject cellObject = gridArray[cellIndex.y, cellIndex.x];
-            if (cellObject != null)
-            {
-                CardData cardData = cellObject.GetComponentInChildren<CardData>();
-                if (cardData != null)
-                {
-                    cardData.topValue = topValue;
-                    Debug.Log($"Updated top value of cell {cellIndex} to {topValue}");
-                }
-                else
-                {
-                    Debug.LogError($"No CardData component found in cell {cellIndex}");
-                }
-            }
-            else
-            {
-                Debug.LogError($"No cell object found at {cellIndex}");
-            }
-        }
-        else
-        {
-            Debug.LogError($"Invalid cell index: {cellIndex}");
-        }
-    }
-
-    public void UpdateCellBottomValue(Vector2Int cellIndex, int bottomValue)
-    {
-        if (IsValidCellIndex(cellIndex))
-        {
-            GameObject cellObject = gridArray[cellIndex.y, cellIndex.x];
-            if (cellObject != null)
-            {
-                CardData cardData = cellObject.GetComponentInChildren<CardData>();
-                if (cardData != null)
-                {
-                    cardData.bottomValue = bottomValue;
-                    Debug.Log($"Updated bottom value of cell {cellIndex} to {bottomValue}");
-                }
-                else
-                {
-                    Debug.LogError($"No CardData component found in cell {cellIndex}");
-                }
-            }
-            else
-            {
-                Debug.LogError($"No cell object found at {cellIndex}");
-            }
-        }
-        else
-        {
-            Debug.LogError($"Invalid cell index: {cellIndex}");
         }
     }
 
@@ -274,7 +233,6 @@ public class Grid : MonoBehaviour
         return new Vector2Int(col, row);
     }
 
-
     public Vector2Int GetCellIndexFromPosition(Vector3 position)
     {
         Vector2 localPosition = transform.InverseTransformPoint(position);
@@ -296,153 +254,44 @@ public class Grid : MonoBehaviour
         return new Vector2Int(-1, -1);
     }
 
-    public RectTransform GetCellRectTransform(Vector2Int cellIndex)
-    {
-        if (IsValidCellIndex(cellIndex))
-        {
-            GameObject cellObject = gridArray[cellIndex.y, cellIndex.x];
-            return cellObject.GetComponent<RectTransform>();
-        }
-        return null;
-    }
-
     public bool IsValidCellIndex(Vector2Int cellIndex)
     {
         return cellIndex.x >= 0 && cellIndex.x < columns && cellIndex.y >= 0 && cellIndex.y < rows;
     }
 
-    public Vector2Int CalculateCardCellSize(GameObject cardObject)
+    private Vector2Int CalculateCardCellSize(GameObject card)
     {
-        RectTransform cardRectTransform = cardObject.GetComponent<RectTransform>();
-
+        RectTransform cardRectTransform = card.GetComponent<RectTransform>();
         float cardWidth = cardRectTransform.rect.width;
         float cardHeight = cardRectTransform.rect.height;
-        int numCellsWide = Mathf.CeilToInt(cardWidth / cellWidth);
-        int numCellsHigh = Mathf.CeilToInt(cardHeight / cellHeight);
 
-        return new Vector2Int(numCellsWide, numCellsHigh);
+        int cellWidthCount = Mathf.CeilToInt(cardWidth / cellWidth);
+        int cellHeightCount = Mathf.CeilToInt(cardHeight / cellHeight);
+
+        return new Vector2Int(cellWidthCount, cellHeightCount);
     }
 
-    public int GetTopValueInCell(Vector2Int cellIndex)
+    public RectTransform GetCellRectTransform(Vector2Int cellIndex)
     {
-        GameObject cellObject = gridArray[cellIndex.y, cellIndex.x];
-        if (cellObject != null)
+        if (IsValidCellIndex(cellIndex))
         {
-            CardData dominoPiece = cellObject.GetComponentInChildren<CardData>();
-            if (dominoPiece != null)
-            {
-                return dominoPiece.topValue;
-            }
-            else
-            {
-                Debug.LogError($"No DominoPiece component found in cell {cellIndex}");
-            }
+            return gridArray[cellIndex.y, cellIndex.x].GetComponent<RectTransform>();
         }
-        else
+        return null;
+    }
+
+    public int GetCellValue(Vector2Int cellIndex)
+    {
+        if (IsValidCellIndex(cellIndex))
         {
-            Debug.LogError($"No cell object found at {cellIndex}");
+            GameObject cellObject = gridArray[cellIndex.y, cellIndex.x];
+            Cell cellData = cellObject.GetComponent<Cell>();
+
+            if (cellData != null)
+            {
+                return cellData.cellValue;
+            }
         }
         return -1;
-    }
-
-    public int GetBottomValueInCell(Vector2Int cellIndex)
-    {
-        GameObject cellObject = gridArray[cellIndex.y, cellIndex.x];
-        if (cellObject != null)
-        {
-            CardData dominoPiece = cellObject.GetComponentInChildren<CardData>();
-            if (dominoPiece != null)
-            {
-                return dominoPiece.bottomValue;
-            }
-            else
-            {
-                Debug.LogError($"No DominoPiece component found in cell {cellIndex}");
-            }
-        }
-        else
-        {
-            Debug.LogError($"No cell object found at {cellIndex}");
-        }
-        return -1;
-    }
-
-    public bool CanSnapHorizontally(Vector2Int cellIndex, int topValue, int bottomValue)
-    {
-        if (!IsValidCellIndex(cellIndex))
-            return false;
-
-        if (IsCellLocked(cellIndex))
-            return false;
-        if (cellIndex.x > 0)
-        {
-            Vector2Int leftIndex = new Vector2Int(cellIndex.x - 1, cellIndex.y);
-            int leftTopValue = GetTopValueInCell(leftIndex);
-            int leftBottomValue = GetBottomValueInCell(leftIndex);
-            if (leftTopValue == topValue || leftTopValue == -1 || leftBottomValue == bottomValue || leftBottomValue == -1)
-            {
-                return true;
-            }
-        }
-        if (cellIndex.x < columns - 1)
-        {
-            Vector2Int rightIndex = new Vector2Int(cellIndex.x + 1, cellIndex.y);
-            int rightTopValue = GetTopValueInCell(rightIndex);
-            int rightBottomValue = GetBottomValueInCell(rightIndex);
-
-            if (rightTopValue == topValue || rightTopValue == -1 || rightBottomValue == bottomValue || rightBottomValue == -1)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public bool CanSnapVertically(Vector2Int cellIndex, int topValue, int bottomValue)
-    {
-        if (!IsValidCellIndex(cellIndex))
-            return false;
-
-        if (IsCellLocked(cellIndex))
-            return false;
-
-        if (cellIndex.y > 0)
-        {
-            Vector2Int bottomIndex = new Vector2Int(cellIndex.x, cellIndex.y - 1);
-            int bottomTopValue = GetTopValueInCell(bottomIndex);
-            int bottomBottomValue = GetBottomValueInCell(bottomIndex);
-            if (bottomTopValue == topValue || bottomTopValue == -1 || bottomBottomValue == bottomValue || bottomBottomValue == -1)
-            {
-                return true;
-            }
-        }
-
-        if (cellIndex.y < rows - 1)
-        {
-            Vector2Int topIndex = new Vector2Int(cellIndex.x, cellIndex.y + 1);
-            int topTopValue = GetTopValueInCell(topIndex);
-            int topBottomValue = GetBottomValueInCell(topIndex);
-
-            if (topTopValue == topValue || topTopValue == -1 || topBottomValue == bottomValue || topBottomValue == -1)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-
-
-
-    private bool leftRightValuesMatch(int leftTop, int leftBottom, int rightTop, int rightBottom)
-    {
-        return (leftTop == rightTop || leftBottom == rightBottom);
-    }
-
-    private bool topBottomValuesMatch(int topTop, int topBottom, int bottomTop, int bottomBottom)
-    {
-        return (topTop == bottomTop || topBottom == bottomBottom);
     }
 }

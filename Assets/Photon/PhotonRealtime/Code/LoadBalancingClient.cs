@@ -4072,6 +4072,8 @@ namespace Photon.Realtime
         /// The former MasterClient is still in the player list when this method get called.
         /// </remarks>
         void OnMasterClientSwitched(Player newMasterClient);
+        //void OnPlayerLeftRoom(global::Player otherPlayer);
+        //void OnPlayerLeftRoom(global::Player otherPlayer);
     }
 
 

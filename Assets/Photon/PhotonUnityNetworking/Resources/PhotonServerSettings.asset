@@ -58,6 +58,8 @@ MonoBehaviour:
   - RPC_SetPlayerName
   - RPC_SetCurrentPlayerIndex
   - RPC_RequestCurrentPlayerIndex
+  - RPC_AddDominoToPlayerHand
+  - RPC_UpdateCardVisibility
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 0

@@ -520,7 +520,7 @@ MonoBehaviour:
   m_Padding:
     m_Left: 12
     m_Right: 2
-    m_Top: 15
+    m_Top: -5
     m_Bottom: 0
   m_ChildAlignment: 0
   m_Spacing: 0
@@ -543,3 +543,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a159486cd4cf6544b39166f205c20a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  totalScore: 0
+  scoreText: {fileID: 2116951252776300775}

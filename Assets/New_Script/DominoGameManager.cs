@@ -1,31 +1,51 @@
 using UnityEngine;
 using System.Collections.Generic;
+using TMPro;
 using Photon.Pun;
+using Firebase;
+using Firebase.Database;
+using System;
+using System.Collections;
+
+public enum GameModes
+{
+    OneVsOne,
+    AllFives
+}
 
 public class DominoGameManager : MonoBehaviour
 {
     public GameObject dominoPrefab;
     public DominoCard[] dominoCards;
     public Transform spawnGB;
-    public int tilesPerPlayer = 7;
+    public int finalScore = 50; // Final score to end the match
 
     private List<GameObject> allDominoes = new List<GameObject>();
     private List<DominoHand> players = new List<DominoHand>();
     private DominoBoneYard boneYard;
 
+    private DatabaseReference databaseReference;
+
+    public GameModes gameMode = GameModes.OneVsOne;
+
     void Start()
     {
-        
-        for (int i = 0; i < dominoCards.Length; i++)
+        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task =>
         {
-            GameObject domino = CreateDominoCard(dominoCards[i]);
-            allDominoes.Add(domino);
-        }
+            FirebaseApp app = FirebaseApp.DefaultInstance;
+            databaseReference = FirebaseDatabase.DefaultInstance.RootReference;
 
-        players.AddRange(FindObjectsOfType<DominoHand>());
-        boneYard = FindObjectOfType<DominoBoneYard>();
+            foreach (var card in dominoCards)
+            {
+                GameObject domino = CreateDominoCard(card);
+                allDominoes.Add(domino);
+            }
 
-        DealDominoes();
+            players.AddRange(FindObjectsOfType<DominoHand>());
+            boneYard = FindObjectOfType<DominoBoneYard>();
+
+            DealDominoes();
+        });
     }
 
     GameObject CreateDominoCard(DominoCard cardData)
@@ -48,6 +68,8 @@ public class DominoGameManager : MonoBehaviour
     void DealDominoes()
     {
         Shuffle(allDominoes);
+
+        int tilesPerPlayer = GetTilesPerPlayer();
 
         int currentDominoIndex = 0;
 
@@ -80,6 +102,19 @@ public class DominoGameManager : MonoBehaviour
         }
     }
 
+    int GetTilesPerPlayer()
+    {
+        switch (gameMode)
+        {
+            case GameModes.OneVsOne:
+                return 7;
+            case GameModes.AllFives:
+                return 5; // Change this value as needed for your game mode
+            default:
+                return 7; // Default to 7 tiles per player
+        }
+    }
+
     public void RemoveFromHand(GameObject domino)
     {
         foreach (DominoHand player in players)
@@ -101,7 +136,7 @@ public class DominoGameManager : MonoBehaviour
         for (int i = 0; i < list.Count; i++)
         {
             GameObject temp = list[i];
-            int randomIndex = Random.Range(i, list.Count);
+            int randomIndex = UnityEngine.Random.Range(i, list.Count);
             list[i] = list[randomIndex];
             list[randomIndex] = temp;
         }
@@ -111,4 +146,114 @@ public class DominoGameManager : MonoBehaviour
     {
         return boneYard;
     }
+
+    public void GameOver()
+    {
+        DominoHand winningPlayer = null;
+        int totalRemainingValues = 0;
+
+        foreach (DominoHand player in players)
+        {
+            if (player.GetHandCount() == 0)
+            {
+                winningPlayer = player;
+            }
+            else
+            {
+                totalRemainingValues += player.GetTotalHandValue();
+            }
+        }
+
+        if (winningPlayer != null)
+        {
+            foreach (DominoHand player in players)
+            {
+                int scoreToAdd = 0;
+
+                if (player == winningPlayer)
+                {
+                    scoreToAdd = totalRemainingValues;
+
+                    // Round score to the nearest higher multiple of five if game mode is AllFives
+                    if (gameMode == GameModes.AllFives)
+                    {
+                        scoreToAdd = ((scoreToAdd + 4) / 5) * 5; // Round up to the nearest higher multiple of 5
+                    }
+
+                    player.totalScore += scoreToAdd;
+                    StartCoroutine(UpdateGameResult(new GameResultData { PlayerId = player.gameObject.name, Result = scoreToAdd }));
+                }
+                else
+                {
+                    player.totalScore += 0; // Player who lost gets 0 points
+                    StartCoroutine(UpdateGameResult(new GameResultData { PlayerId = player.gameObject.name, Result = 0 })); // Save 0 for the player who lost
+                }
+
+                player.UpdateScoreText();
+            }
+
+            Debug.Log($"Game Over! The winning player is {winningPlayer.gameObject.name} with a total remaining value of {totalRemainingValues} for other players.");
+
+            // Check if any player has reached the final score
+            if (CheckForFinalScore())
+            {
+                EndMatch();
+            }
+            else
+            {
+                StartCoroutine(ResetAndDealNewRound());
+            }
+        }
+        else
+        {
+            Debug.LogError("Game Over called but no player has an empty hand.");
+        }
+    }
+
+
+    bool CheckForFinalScore()
+    {
+        foreach (DominoHand player in players)
+        {
+            if (player.totalScore >= finalScore)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void EndMatch()
+    {
+        // Handle match end logic, e.g., display winner, save results, etc.
+        Debug.Log("Match has ended as a player has reached the final score.");
+        // Additional logic to handle match end can be added here
+    }
+
+    IEnumerator ResetAndDealNewRound()
+    {
+        yield return new WaitForSeconds(2); // Wait for 2 seconds before reshuffling and dealing new round
+
+        // Collect all cards back
+        foreach (DominoHand player in players)
+        {
+            player.CollectAllCards(allDominoes);
+        }
+        boneYard.CollectAllCards(allDominoes);
+
+        // Reshuffle and redistribute the cards
+        DealDominoes();
+    }
+
+    IEnumerator UpdateGameResult(GameResultData data)
+    {
+        var task = databaseReference.Child("players").Child(data.PlayerId).Child("gameResult").SetValueAsync(data.Result);
+        yield return new WaitUntil(() => task.IsCompleted);
+    }
+}
+
+public class GameResultData
+{
+    public string PlayerId { get; set; }
+    public int Result { get; set; }
 }

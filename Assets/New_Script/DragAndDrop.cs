@@ -16,6 +16,9 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
     public RectTransform topHalf;
     public RectTransform bottomHalf;
+    private int topValue;
+    private int bottomValue;
+    public CardVisibilityManager visibilityManager;
 
     private void Awake()
     {
@@ -24,11 +27,22 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         canvasGroup = GetComponent<CanvasGroup>();
         grid = FindObjectOfType<Grid>();
         cardData = GetComponent<CardData>();
+        visibilityManager = GetComponent<CardVisibilityManager>();
+    }
+
+    private void Start()
+    {
+        topValue = cardData.topValue;
+        bottomValue = cardData.bottomValue;
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (!TurnManager.Instance.IsMyTurn()) return;
+        if (!TurnManager.Instance.IsMyTurn())
+        {
+            Debug.Log("Not your turn!");
+            return;
+        }
 
         canvasGroup.alpha = 0.6f;
         canvasGroup.blocksRaycasts = false;
@@ -44,7 +58,10 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (!TurnManager.Instance.IsMyTurn()) return;
+        if (!TurnManager.Instance.IsMyTurn())
+        {
+            return;
+        }
 
         Vector3 worldMousePos;
         RectTransformUtility.ScreenPointToWorldPointInRectangle(rectTransform, eventData.position, canvas.worldCamera, out worldMousePos);
@@ -53,7 +70,10 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (!TurnManager.Instance.IsMyTurn()) return;
+        if (!TurnManager.Instance.IsMyTurn())
+        {
+            return;
+        }
 
         canvasGroup.alpha = 1f;
         canvasGroup.blocksRaycasts = true;
@@ -71,7 +91,8 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
                 if (grid.IsValidCellIndex(cellIndex))
                 {
                     SnapToCells(cellIndex);
-                    TurnManager.Instance.EndTurn();
+                    SetCellValues(cellObject);
+                    visibilityManager.PlayCard();
                 }
                 else
                 {
@@ -85,11 +106,17 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
             ResetPosition();
             Debug.Log("No collider hit.");
         }
+
+        TurnManager.Instance.EndTurn();
     }
 
-    private bool CanSnapToCell(Vector2Int cellIndex)
+    private bool CanSnapToCell(Vector2Int cellIndex, int halfValue, bool isTopHalf)
     {
-        return grid.IsValidCellIndex(cellIndex) && !grid.IsCellLocked(cellIndex);
+        if (!grid.IsValidCellIndex(cellIndex) || grid.IsCellLocked(cellIndex)) return false;
+
+        int cellValue = isTopHalf ? topValue : bottomValue;
+
+        return cellValue == halfValue || cellValue == -1;
     }
 
     private void SnapToCells(Vector2Int cellIndex)
@@ -97,26 +124,45 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         Vector2Int topHalfCellIndex = cellIndex;
         Vector2Int bottomHalfCellIndex = GetBottomHalfCellIndex(cellIndex);
 
-        if (CanSnapToCell(topHalfCellIndex))
+        topValue = cardData.GetTopValue();
+        bottomValue = cardData.GetBottomValue();
+
+        bool canSnapTop = CanSnapToCell(topHalfCellIndex, topValue, true);
+        bool canSnapBottom = CanSnapToCell(bottomHalfCellIndex, bottomValue, false);
+
+        if (canSnapTop && canSnapBottom)
         {
             SnapToCell(topHalf, topHalfCellIndex);
-            SnapToCell(rectTransform, topHalfCellIndex);
-            grid.LockCell(topHalfCellIndex);
-        }
+            if (!cardData.isRotated)
+            {
+                SnapToCell(rectTransform, topHalfCellIndex, new Vector3(0, -15, 0));
+            }
+            else
+            {
+                SnapToCell(rectTransform, topHalfCellIndex, new Vector3(15, 0, 0));
+            }
 
-        if (CanSnapToCell(bottomHalfCellIndex))
-        {
             SnapToCell(bottomHalf, bottomHalfCellIndex);
-            grid.LockCell(bottomHalfCellIndex);
-        }
 
-        if (originalHand != null)
-        {
-            originalHand.RemoveFromHand(gameObject);
+            grid.LockCell(topHalfCellIndex);
+            grid.LockCell(bottomHalfCellIndex);
+
+            if (originalHand != null)
+            {
+                originalHand.RemoveFromHand(gameObject);
+            }
+            else if (originalBoneYard != null)
+            {
+                originalBoneYard.RemoveFromBoneYard(gameObject);
+            }
+
+            SetCellValues(grid.GetCellObject(topHalfCellIndex));
+            SetCellValues(grid.GetCellObject(bottomHalfCellIndex));
         }
-        else if (originalBoneYard != null)
+        else
         {
-            originalBoneYard.RemoveFromBoneYard(gameObject);
+            ResetPosition();
+            Debug.Log("Cannot snap both halves to valid cells.");
         }
     }
 
@@ -124,35 +170,38 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     {
         if (cardData.isRotated)
         {
-            return new Vector2Int(cellIndex.x - 1, cellIndex.y);
+            return new Vector2Int(cellIndex.x + 1, cellIndex.y);
         }
         else
         {
-            return new Vector2Int(cellIndex.x, cellIndex.y - 1);
+            return new Vector2Int(cellIndex.x, cellIndex.y + 1);
         }
     }
 
-    private void SnapToCell(RectTransform halfRectTransform, Vector2Int cellIndex)
+    private void SnapToCell(RectTransform halfRectTransform, Vector2Int cellIndex, Vector3? offset = null)
     {
         RectTransform cellRectTransform = grid.GetCellRectTransform(cellIndex);
         halfRectTransform.SetParent(cellRectTransform, false);
-        halfRectTransform.localPosition = Vector3.zero;
+        halfRectTransform.localPosition = offset ?? Vector3.zero;
+        halfRectTransform.localScale = Vector3.one;
+    }
 
-        grid.LockCell(cellIndex);
+    private void SetCellValues(GameObject cellObject)
+    {
+        Cell cell = cellObject.GetComponent<Cell>();
 
-        if (halfRectTransform == topHalf)
+        if (cell != null)
         {
-            int topValue = cardData.GetTopValue();
-            grid.UpdateCellTopValue(cellIndex, topValue);
-
-            Debug.Log($"Snapped top half to cell {cellIndex}. Top Value: {topValue}");
-        }
-        else if (halfRectTransform == bottomHalf)
-        {
-            int bottomValue = cardData.GetBottomValue();
-            grid.UpdateCellBottomValue(cellIndex, bottomValue);
-
-            Debug.Log($"Snapped bottom half to cell {cellIndex}. Bottom Value: {bottomValue}");
+            if (cell.transform.Find("Image"))
+            {
+                cell.cellValue = bottomValue;
+                Debug.Log($"Set cell {cellObject.name} bottom value to {bottomValue}");
+            }
+            else if (cell.transform.Find("Image_1"))
+            {
+                cell.cellValue = topHalf.GetComponent<GetValue>().topValue;
+                Debug.Log($"Set cell {cellObject.name} top value to {topValue}");
+            }
         }
     }
 

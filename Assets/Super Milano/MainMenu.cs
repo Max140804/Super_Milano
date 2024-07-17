@@ -1178,6 +1178,16 @@ public class MainMenu : MonoBehaviourPunCallbacks
             roomGO2v2.SetActive(false);
             Debug.Log("Left Room");
         }
+        UpdatePlayerList();
+    }
+
+    public override void OnPlayerEnteredRoom(Player newPlayer)
+    {
+        UpdatePlayerList();
+    }
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        UpdatePlayerList();
     }
 
     void UpdatePlayerList()
@@ -1212,14 +1222,7 @@ public class MainMenu : MonoBehaviourPunCallbacks
         }
     }
 
-    public override void OnPlayerEnteredRoom(Player newPlayer)
-    {
-        UpdatePlayerList();
-    }
-    public override void OnPlayerLeftRoom(Player otherPlayer)
-    {
-        UpdatePlayerList();
-    }
+  
 
     public void OnClickPlayByMaster()
     {

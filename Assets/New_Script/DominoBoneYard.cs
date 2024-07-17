@@ -113,4 +113,21 @@ public class DominoBoneYard : MonoBehaviour
     {
         anim.Play("Close");
     }
+
+    public void CollectAllCards(List<GameObject> allDominoes)
+    {
+        // Add logic to collect all cards back into the allDominoes list
+        foreach (Transform child in transform)
+        {
+            allDominoes.Add(child.gameObject);
+            child.SetParent(null);
+        }
+        ClearBoneYard();
+    }
+
+    public void ClearBoneYard()
+    {
+        // Clear the boneyard list
+        boneyard.Clear();
+    }
 }
