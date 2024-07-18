@@ -1,27 +1,66 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using Photon.Pun;
 using Photon.Realtime;
 using System;
+using System.Collections;
 
 public class TournamentSystem : MonoBehaviourPunCallbacks
 {
-    public GameObject tournamentPrefab;
-    public GameObject content;
-    public Text statusText;
-    public Text matchScheduleText;
+    public TournamentDisplay tournamentPrefab;
+    public Transform contentActive;
+    public Transform contentAvailable;
+    public TextMeshProUGUI statusText;
+    public TextMeshProUGUI matchScheduleText;
+    public InputField tournamentNameInputField;
+    public int maxPlayersInputField = 16;
+    public GameObject createPanel;
+    public GameObject tournamentRoomPanel;
+    public TextMeshProUGUI roomName;
+    public GameObject match1v1Panel;
 
     public List<Text> playerNames;
-    public List<Text> readyStatus;
+    //public List<Text> readyStatus;
 
+   
+
+    List<TournamentDisplay> tournamentList = new List<TournamentDisplay>();
     private List<Player> players = new List<Player>();
     private List<Match> matches = new List<Match>();
     private int matchCounter = 1;
     private bool tournamentStarted = false;
+    private List<NewTournamentCreation> availableTournaments = new List<NewTournamentCreation>();
+    private List<NewTournamentCreation> activeTournaments = new List<NewTournamentCreation>();
 
-    private List<Tournament> availableTournaments = new List<Tournament>();
-    private List<Tournament> activeTournaments = new List<Tournament>();
+    private Coroutine countdownCoroutine;
+
+    private void StartCountdown(NewTournamentCreation tournament)
+    {
+        if (countdownCoroutine != null)
+        {
+            StopCoroutine(countdownCoroutine);
+        }
+        countdownCoroutine = StartCoroutine(CountdownCoroutine(tournament));
+    }
+
+    IEnumerator CountdownCoroutine(NewTournamentCreation tournament)
+    {
+        while (true)
+        {
+            TimeSpan timeRemaining = tournament.GetTimeRemaining();
+            if (timeRemaining <= TimeSpan.Zero)
+            {
+                tournament.StartTournament();
+                
+                break;
+            }
+            
+        }
+        yield return new WaitForSeconds(1);
+    }
+
 
     // Example method to add players to the tournament
     public void AddPlayer(string playerName)
@@ -68,7 +107,7 @@ public class TournamentSystem : MonoBehaviourPunCallbacks
 
             Match match = new Match(player1, player2, matchTime);
             matches.Add(match);
-            matchScheduleText.text += $"Match {matchCounter}: {match.Player1.NickName} vs {match.Player2.NickName} at {match.MatchTime}\n";
+
             matchCounter++;
 
             // Create a Photon room for each match
@@ -77,10 +116,41 @@ public class TournamentSystem : MonoBehaviourPunCallbacks
             roomOptions.IsOpen = true;
             roomOptions.MaxPlayers = 2; // Each match room can accommodate 2 players
             PhotonNetwork.CreateRoom($"Match_{matchCounter}", roomOptions);
+
+            // Find the button corresponding to this match and update its text
+            Button matchButton = contentActive.transform.GetChild(i).GetComponent<Button>();
+            if (matchButton != null)
+            {
+                Text buttonText = matchButton.GetComponentInChildren<Text>();
+                if (buttonText != null)
+                {
+                    buttonText.text = $"Match {matchCounter}: {match.Player1.NickName} vs {match.Player2.NickName} at {match.MatchTime}";
+                }
+            }
         }
     }
 
-    // Photon Callbacks
+    public void CreateNewTournament()
+    {
+        string tournamentName = tournamentNameInputField.text;
+        int maxPlayers = maxPlayersInputField;
+        if (string.IsNullOrEmpty(tournamentName))
+        {
+            statusText.text = "Invalid tournament name or player count.";
+            return;
+        }
+
+        DateTime startTime = DateTime.Now.AddMinutes(30);
+        TimeSpan duration = TimeSpan.FromHours(4);
+
+        NewTournamentCreation newTournament = new NewTournamentCreation(tournamentName, maxPlayers, startTime, duration);
+        availableTournaments.Add(newTournament);
+        statusText.text = $"Tournament '{tournamentName}' created with max {maxPlayers} players.";
+
+        DisplayAvailableTournaments();
+        StartCountdown(newTournament);
+    }
+
     public override void OnCreateRoomFailed(short returnCode, string message)
     {
         Debug.LogError($"Room creation failed: {message}");
@@ -94,35 +164,38 @@ public class TournamentSystem : MonoBehaviourPunCallbacks
     public override void OnJoinedRoom()
     {
         Debug.Log("Joined match room!");
-
+        createPanel.SetActive(false);
+        tournamentRoomPanel.SetActive(false);
+        match1v1Panel.SetActive(true);
+        roomName.text = "Room Name: " + PhotonNetwork.CurrentRoom.Name;
     }
 
     // Function to display all available tournaments
     public void DisplayAvailableTournaments()
     {
         // Clear previous tournament display
-        foreach (Transform child in content.transform)
+        foreach (TournamentDisplay child in tournamentList)
         {
             Destroy(child.gameObject);
         }
+        tournamentList.Clear();
 
         // Display each tournament
-        foreach (Tournament tournament in availableTournaments)
+        foreach (NewTournamentCreation tournament in availableTournaments)
         {
-            GameObject tournamentObj = Instantiate(tournamentPrefab, content.transform);
+            GameObject tournamentObj = Instantiate(tournamentPrefab.gameObject, contentAvailable);
             TournamentDisplay tournamentDisplay = tournamentObj.GetComponent<TournamentDisplay>();
 
             if (tournamentDisplay != null)
             {
                 tournamentDisplay.SetTournamentInfo(tournament);
-                Button joinButton = tournamentDisplay.GetJoinButton();
-                joinButton.onClick.AddListener(() => JoinTournament(tournament));
+                tournamentList.Add(tournamentDisplay);
             }
         }
     }
 
     // Function to join a tournament
-    public void JoinTournament(Tournament tournament)
+    public void JoinTournament(NewTournamentCreation tournament)
     {
         if (tournament.Players.Count < tournament.MaxPlayers)
         {
@@ -137,7 +210,7 @@ public class TournamentSystem : MonoBehaviourPunCallbacks
         }
     }
 
-    private void AddPlayerToTournament(Tournament tournament, string playerName)
+    private void AddPlayerToTournament(NewTournamentCreation tournament, string playerName)
     {
         GameObject playerObj = new GameObject(playerName);
         //Player newPlayer = playerObj.AddComponent<Player>();
@@ -149,7 +222,7 @@ public class TournamentSystem : MonoBehaviourPunCallbacks
         }
     }
 
-    private void StartTournament(Tournament tournament)
+    private void StartTournament(NewTournamentCreation tournament)
     {
         tournament.StartTournament();
         activeTournaments.Add(tournament);
@@ -160,21 +233,22 @@ public class TournamentSystem : MonoBehaviourPunCallbacks
     // Function to display active tournaments
     public void DisplayActiveTournaments()
     {
-        // Clear previous tournament display
-        foreach (Transform child in content.transform)
+        foreach (TournamentDisplay child in tournamentList)
         {
             Destroy(child.gameObject);
         }
+        tournamentList.Clear();
 
-        // Display each active tournament
-        foreach (Tournament tournament in activeTournaments)
+        // Display each tournament
+        foreach (NewTournamentCreation tournament in availableTournaments)
         {
-            GameObject tournamentObj = Instantiate(tournamentPrefab, content.transform);
+            GameObject tournamentObj = Instantiate(tournamentPrefab.gameObject, contentActive);
             TournamentDisplay tournamentDisplay = tournamentObj.GetComponent<TournamentDisplay>();
 
             if (tournamentDisplay != null)
             {
                 tournamentDisplay.SetTournamentInfo(tournament);
+                tournamentList.Add(tournamentDisplay);
             }
         }
     }
@@ -182,7 +256,7 @@ public class TournamentSystem : MonoBehaviourPunCallbacks
     public string GetCurrentPlayerName()
     {
         // Placeholder for getting the current player's name
-        return "Player_" + UnityEngine.Random.Range(1, 1000).ToString();
+        return PhotonNetwork.LocalPlayer.NickName;
     }
 
     // Example class to represent a match
@@ -200,40 +274,38 @@ public class TournamentSystem : MonoBehaviourPunCallbacks
         }
     }
 
-    public class Tournament
+    public class NewTournamentCreation
     {
         public string Name { get; private set; }
         public int MaxPlayers { get; private set; }
         public List<Player> Players { get; private set; }
         public bool IsActive { get; private set; }
+        [HideInInspector] public int timeRemainingTillStart;
+        [HideInInspector] public string Status;
 
-        public Tournament(string name, int maxPlayers)
+        private DateTime startTime;
+        private TimeSpan duration;
+
+        public NewTournamentCreation(string name, int maxPlayers, DateTime startTime, TimeSpan duration)
         {
             Name = name;
             MaxPlayers = maxPlayers;
             Players = new List<Player>();
             IsActive = false;
+            this.startTime = startTime;
+            this.duration = duration;
         }
 
         public void StartTournament()
         {
             IsActive = true;
+            Status = "ACTIVE";
+        }
+
+        public TimeSpan GetTimeRemaining()
+        {
+            return startTime - DateTime.Now;
         }
     }
-}
 
-public class TournamentDisplay : MonoBehaviour
-{
-    public Text tournamentNameText;
-    public Button joinButton;
-
-    public void SetTournamentInfo(TournamentSystem.Tournament tournament)
-    {
-        tournamentNameText.text = tournament.Name;
-    }
-
-    public Button GetJoinButton()
-    {
-        return joinButton;
-    }
 }

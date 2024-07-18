@@ -18,7 +18,7 @@ public class DominoGameManager : MonoBehaviour
     public GameObject dominoPrefab;
     public DominoCard[] dominoCards;
     public Transform spawnGB;
-    public int finalScore = 50; // Final score to end the match
+    public int finalScore = 50;
 
     private List<GameObject> allDominoes = new List<GameObject>();
     private List<DominoHand> players = new List<DominoHand>();
