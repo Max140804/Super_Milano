@@ -30,21 +30,21 @@ public class DominoGameManager : MonoBehaviour
 
     void Start()
     {
+        foreach (var card in dominoCards)
+        {
+            GameObject domino = CreateDominoCard(card);
+            allDominoes.Add(domino);
+        }
+
+        players.AddRange(FindObjectsOfType<DominoHand>());
+        boneYard = FindObjectOfType<DominoBoneYard>();
+
+        DealDominoes();
+
         FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task =>
         {
             FirebaseApp app = FirebaseApp.DefaultInstance;
             databaseReference = FirebaseDatabase.DefaultInstance.RootReference;
-
-            foreach (var card in dominoCards)
-            {
-                GameObject domino = CreateDominoCard(card);
-                allDominoes.Add(domino);
-            }
-
-            players.AddRange(FindObjectsOfType<DominoHand>());
-            boneYard = FindObjectOfType<DominoBoneYard>();
-
-            DealDominoes();
         });
     }
 

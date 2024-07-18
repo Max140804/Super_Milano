@@ -23,7 +23,7 @@ public class TournamentDisplay : MonoBehaviour
         tournamentNameText.text = tournament.Name;
         TimeSpan timeRemaining = tournament.GetTimeRemaining();
         isActiveText.text = "ACTIVE";
-        timeTillStartText.text = $"Time Remaining: {timeRemaining.Hours:D2}:{timeRemaining.Minutes:D2}:{timeRemaining.Seconds:D2}";
+        timeTillStartText.text = $"Starts In: {timeRemaining.Hours:D2}:{timeRemaining.Minutes:D2}:{timeRemaining.Seconds:D2}";
         tour = tournament;
     }
 
