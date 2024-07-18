@@ -368,12 +368,11 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
 
         if (task.Exception != null)
         {
-            Debug.LogError($"Failed to set player coins: {task.Exception}");
+            Debug.LogError($"Failed to set tournament type: {task.Exception}");
         }
         else
         {
-            // Success
-            Debug.Log("Successfully set player coins.");
+            Debug.Log("Successfully set tournament type.");
         }
 
         var task2 = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId)).Child(HelperClass.Encrypt(name, playerId)).Child(HelperClass.Encrypt("players", playerId)).SetValueAsync(players);
@@ -381,12 +380,11 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
 
         if (task2.Exception != null)
         {
-            Debug.LogError($"Failed to set player coins: {task2.Exception}");
+            Debug.LogError($"Failed to set tournament players: {task2.Exception}");
         }
         else
         {
-            // Success
-            Debug.Log("Successfully set player coins.");
+            Debug.Log("Successfully set tournament players.");
         }
 
         var task3 = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId)).Child(HelperClass.Encrypt(name, playerId)).Child(HelperClass.Encrypt("bid", playerId)).SetValueAsync(bid);
@@ -394,27 +392,32 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
 
         if (task3.Exception != null)
         {
-            Debug.LogError($"Failed to set player coins: {task3.Exception}");
+            Debug.LogError($"Failed to set tournament bid: {task3.Exception}");
         }
         else
         {
-            // Success
-            Debug.Log("Successfully set player coins.");
+            Debug.Log("Successfully set tournament bid.");
         }
 
-        var task4 = menu.databaseReference.Child(HelperClass.Encrypt("players", playerId)).Child(HelperClass.Encrypt(menu.playerId, playerId)).Child(HelperClass.Encrypt("Tournments", playerId)).Child(HelperClass.Encrypt(name, playerId)).SetValueAsync("true");
+        // Add the creator to the tournament's players list
+        var task4 = menu.databaseReference.Child(HelperClass.Encrypt("players", playerId))
+            .Child(HelperClass.Encrypt(menu.playerId, playerId))
+            .Child(HelperClass.Encrypt("Tournments", playerId))
+            .Child(HelperClass.Encrypt(name, playerId))
+            .SetValueAsync("true");
         yield return new WaitUntil(() => task4.IsCompleted);
 
         if (task4.Exception != null)
         {
-            Debug.LogError($"Failed to set player coins: {task4.Exception}");
+            Debug.LogError($"Failed to add creator to tournament: {task4.Exception}");
         }
         else
         {
-            // Success
-            Debug.Log("Successfully set player coins.");
+            Debug.Log("Successfully added creator to tournament.");
+            tourr.SetActive(true);
         }
     }
+
 
     public void Join(string tournamentname)
     {
@@ -423,74 +426,118 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
 
     public IEnumerator JoinTournament(string name)
     {
-        var checkTask = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId)).Child(HelperClass.Encrypt(name, playerId)).Child(HelperClass.Encrypt("currentplayers", playerId)).GetValueAsync();
+        var checkTask = menu.databaseReference.Child(HelperClass.Encrypt("players", playerId))
+                                             .Child(HelperClass.Encrypt(menu.playerId, playerId))
+                                             .Child(HelperClass.Encrypt("Tournments", playerId))
+                                             .Child(HelperClass.Encrypt(name, playerId))
+                                             .GetValueAsync();
         yield return new WaitUntil(() => checkTask.IsCompleted);
 
         if (checkTask.Exception != null)
         {
-            Debug.LogError($"Failed to get current players: {checkTask.Exception}");
+            Debug.LogError($"Failed to get join status: {checkTask.Exception}");
         }
-        else if (checkTask.Result.Value == null)
+        else if (checkTask.Result.Value != null)
+        {
+            Debug.Log("Player has already joined this tournament.");
+            tourr.SetActive(true);
+        }
+        else
+        {
+            StartCoroutine(IncrementCurrentPlayers(name));
+        }
+    }
+
+    public IEnumerator IncrementCurrentPlayers(string name)
+    {
+        var currentPlayersTask = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId))
+                                                     .Child(HelperClass.Encrypt(name, playerId))
+                                                     .Child(HelperClass.Encrypt("currentplayers", playerId))
+                                                     .GetValueAsync();
+        yield return new WaitUntil(() => currentPlayersTask.IsCompleted);
+
+        if (currentPlayersTask.Exception != null)
+        {
+            Debug.LogError($"Failed to get current players count: {currentPlayersTask.Exception}");
+        }
+        else if (currentPlayersTask.Result.Value == null)
         {
             Debug.LogError("Current players count not found in database.");
         }
         else
         {
-            int currentPlayers = int.Parse(checkTask.Result.Value.ToString());
+            int currentPlayers = int.Parse(currentPlayersTask.Result.Value.ToString());
 
-            var playersTask = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId)).Child(HelperClass.Encrypt(name, playerId)).Child(HelperClass.Encrypt("players", playerId)).GetValueAsync();
-            yield return new WaitUntil(() => playersTask.IsCompleted);
+            var totalPlayersTask = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId))
+                                                       .Child(HelperClass.Encrypt(name, playerId))
+                                                       .Child(HelperClass.Encrypt("players", playerId))
+                                                       .GetValueAsync();
+            yield return new WaitUntil(() => totalPlayersTask.IsCompleted);
 
-            if (playersTask.Exception != null)
+            if (totalPlayersTask.Exception != null)
             {
-                Debug.LogError($"Failed to get total players: {playersTask.Exception}");
+                Debug.LogError($"Failed to get total players count: {totalPlayersTask.Exception}");
             }
-            else if (playersTask.Result.Value == null)
+            else if (totalPlayersTask.Result.Value == null)
             {
                 Debug.LogError("Total players count not found in database.");
             }
             else
             {
-                int totalPlayers = int.Parse(playersTask.Result.Value.ToString());
+                int totalPlayers = int.Parse(totalPlayersTask.Result.Value.ToString());
 
                 if (currentPlayers < totalPlayers)
                 {
-                    // Increment the current players count in the database
-                    StartCoroutine(IncrementCurrentPlayers(name, currentPlayers + 1));
+                    var incrementTask = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId))
+                                                             .Child(HelperClass.Encrypt(name, playerId))
+                                                             .Child(HelperClass.Encrypt("currentplayers", playerId))
+                                                             .SetValueAsync(currentPlayers + 1);
+                    yield return new WaitUntil(() => incrementTask.IsCompleted);
+
+                    if (incrementTask.Exception != null)
+                    {
+                        Debug.LogError($"Failed to update current players count: {incrementTask.Exception}");
+                    }
+                    else
+                    {
+                        var joinStatusTask = menu.databaseReference.Child(HelperClass.Encrypt("players", playerId))
+                                                                 .Child(HelperClass.Encrypt(menu.playerId, playerId))
+                                                                 .Child(HelperClass.Encrypt("Tournments", playerId))
+                                                                 .Child(HelperClass.Encrypt(name, playerId))
+                                                                 .SetValueAsync("true");
+                        yield return new WaitUntil(() => joinStatusTask.IsCompleted);
+
+                        if (joinStatusTask.Exception != null)
+                        {
+                            Debug.LogError($"Failed to update join status: {joinStatusTask.Exception}");
+                        }
+                        else
+                        {
+                            // Successfully updated join status and incremented players count
+                            Debug.Log("Successfully joined tournament.");
+
+                            // Activate tourr GameObject and update player names
+                            tourr.SetActive(true);
+
+                            List<string> emptyNames = new List<string>();
+                            for (int i = 0; i < 16; i++)
+                            {
+                                emptyNames.Add("");
+                            }
+
+                            UpdatePlayerNames(emptyNames, 16);
+                        }
+                    }
                 }
                 else
                 {
                     menu.errorpanel.gameObject.SetActive(true);
-                    menu.errorpanel_text.text = "The tournament is Full";
+                    menu.errorpanel_text.text = "The tournament is full.";
                 }
             }
         }
     }
 
-    public IEnumerator IncrementCurrentPlayers(string name, int newCurrentPlayers)
-    {
-        var task = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId)).Child(HelperClass.Encrypt(name, playerId)).Child(HelperClass.Encrypt("currentplayers", playerId)).SetValueAsync(newCurrentPlayers);
-        yield return new WaitUntil(() => task.IsCompleted);
-
-        if (task.Exception != null)
-        {
-            Debug.LogError($"Failed to update current players count: {task.Exception}");
-        }
-        else
-        {
-            // Success
-            Debug.Log("Successfully updated current players count.");
-            tourr.SetActive(true);
-
-            List<string> emptyNames = new List<string>();
-            for (int i = 0; i < 16; i++)
-            {
-                emptyNames.Add("");
-            }
-
-            UpdatePlayerNames(emptyNames, 16);
-        }
-    }
 
 
     public IEnumerator Jointour(string name, int currentplayers)
@@ -593,7 +640,18 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
                     names8[i].text = playerNames[i];
                 }
                 break;
-                // Add cases for other stages (4, 2, etc.) as needed
+            case 4:
+                for (int i = 0; i < playerNames.Count && i < names4.Count; i++)
+                {
+                    names4[i].text = playerNames[i];
+                }
+                break;
+            case 2:
+                for (int i = 0; i < playerNames.Count && i < names2.Count; i++)
+                {
+                    names2[i].text = playerNames[i];
+                }
+                break;
         }
     }
 
