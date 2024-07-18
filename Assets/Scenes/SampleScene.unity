@@ -412,7 +412,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerPrefab: {fileID: 2116951252555573356, guid: 2a318a107e43abf4ab86bdeb1bd41e54,
     type: 3}
-  spawnPoint: {fileID: 233451034}
 --- !u!1 &454688285
 GameObject:
   m_ObjectHideFlags: 0
@@ -1216,6 +1215,8 @@ GameObject:
   - component: {fileID: 1185490782}
   - component: {fileID: 1185490781}
   - component: {fileID: 1185490783}
+  - component: {fileID: 1185490785}
+  - component: {fileID: 1185490784}
   m_Layer: 0
   m_Name: Holder
   m_TagString: Untagged
@@ -1305,6 +1306,45 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &1185490784
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1185490779}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 627855c7f81362d41938ffe0b1475957, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SynchronizePosition: 1
+  m_SynchronizeRotation: 1
+  m_SynchronizeScale: 0
+  m_UseLocal: 1
+--- !u!114 &1185490785
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1185490779}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents:
+  - {fileID: 1185490784}
+  sceneViewId: 1
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!1 &1483741458
 GameObject:
   m_ObjectHideFlags: 0
@@ -1671,6 +1711,7 @@ MonoBehaviour:
   spawnGB: {fileID: 1805382020}
   finalScore: 50
   gameMode: 0
+  isTournamentGame: 0
 --- !u!222 &3636318831234157354
 CanvasRenderer:
   m_ObjectHideFlags: 0
