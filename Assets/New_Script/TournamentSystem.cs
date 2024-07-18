@@ -203,7 +203,7 @@ public class TournamentSystem : MonoBehaviourPunCallbacks
     private void AddPlayerToTournament(NewTournamentCreation tournament, string playerName)
     {
         GameObject playerObj = new GameObject(playerName);
-        //Player newPlayer = playerObj.AddComponent<Player>();
+       // Player newPlayer = playerObj.AddComponent<Photon.Realtime.Player>();
         //tournament.Players.Add(newPlayer);
 
         if (tournament.Players.Count >= tournament.MaxPlayers)

@@ -7,6 +7,7 @@ using Firebase;
 using Firebase.Database;
 using System;
 using System.Collections;
+using ExitGames.Client.Photon;
 
 public enum GameModes
 {
@@ -28,6 +29,10 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
     private DatabaseReference databaseReference;
 
     public GameModes gameMode = GameModes.OneVsOne;
+    public bool isTournamentGame = false; // Flag to check if this is a tournament game
+
+    // Define a custom event code
+    private const byte TournamentMatchEndEventCode = 1;
 
     void Start()
     {
@@ -42,7 +47,11 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
 
         DealDominoes();
 
-        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task =>{ FirebaseApp app = FirebaseApp.DefaultInstance; databaseReference = FirebaseDatabase.DefaultInstance.RootReference; });
+        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task =>
+        {
+            FirebaseApp app = FirebaseApp.DefaultInstance;
+            databaseReference = FirebaseDatabase.DefaultInstance.RootReference;
+        });
     }
 
     GameObject CreateDominoCard(DominoCard cardData)
@@ -191,14 +200,30 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
 
             Debug.Log($"Game Over! The winning player is {winningPlayer.gameObject.name} with a total remaining value of {totalRemainingValues} for other players.");
 
-            // Check if any player has reached the final score
-            if (CheckForFinalScore())
+            // Check if this is a tournament game
+            if (isTournamentGame)
             {
-                EndMatch();
+                // Check if any player has reached the final score
+                if (CheckForFinalScore())
+                {
+                    EndTournamentMatch();
+                }
+                else
+                {
+                    StartCoroutine(ResetAndDealNewRound());
+                }
             }
             else
             {
-                StartCoroutine(ResetAndDealNewRound());
+                // Non-tournament game
+                if (CheckForFinalScore())
+                {
+                    EndMatch();
+                }
+                else
+                {
+                    StartCoroutine(ResetAndDealNewRound());
+                }
             }
         }
         else
@@ -206,7 +231,6 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
             Debug.LogError("Game Over called but no player has an empty hand.");
         }
     }
-
 
     bool CheckForFinalScore()
     {
@@ -225,6 +249,25 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
         // Handle match end logic, e.g., display winner, save results, etc.
         Debug.Log("Match has ended as a player has reached the final score.");
         // Additional logic to handle match end can be added here
+    }
+
+    void EndTournamentMatch()
+    {
+        // Handle tournament match end logic, e.g., move winners to the next round
+        Debug.Log("Tournament match has ended as a player has reached the final score.");
+        List<string> winners = new List<string>();
+
+        foreach (DominoHand player in players)
+        {
+            if (player.totalScore >= finalScore)
+            {
+                winners.Add(player.gameObject.name);
+            }
+        }
+
+        // Raise a custom event to notify other scripts or managers
+        object[] content = new object[] { winners.ToArray() }; // Array of winners
+        PhotonNetwork.RaiseEvent(TournamentMatchEndEventCode, content, new RaiseEventOptions { Receivers = ReceiverGroup.All }, SendOptions.SendReliable);
     }
 
     IEnumerator ResetAndDealNewRound()
@@ -250,7 +293,7 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
 
     public override void OnPlayerLeftRoom(Player otherPlayer)
     {
-        Debug.Log($"{otherPlayer.NickName}, left the room.");
+        Debug.Log($"{otherPlayer.NickName} left the room.");
     }
 }
 
