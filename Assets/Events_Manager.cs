@@ -418,45 +418,45 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
 
     public void Join(string tournamentname)
     {
-        StartCoroutine(jointour(tournamentname));
+        StartCoroutine(JoinTournament(tournamentname));
     }
 
-    public IEnumerator jointour(string name)
+    public IEnumerator JoinTournament(string name)
     {
-        var check = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId)).Child(HelperClass.Encrypt(name, playerId)).Child(HelperClass.Encrypt("currentplayers", playerId)).GetValueAsync();
-        yield return new WaitUntil(() => check.IsCompleted);
+        var checkTask = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId)).Child(HelperClass.Encrypt(name, playerId)).Child(HelperClass.Encrypt("currentplayers", playerId)).GetValueAsync();
+        yield return new WaitUntil(() => checkTask.IsCompleted);
 
-        if (check.Exception != null)
+        if (checkTask.Exception != null)
         {
-            Debug.LogError($"Failed to get player coins: {check.Exception}");
+            Debug.LogError($"Failed to get current players: {checkTask.Exception}");
         }
-        else if (check.Result.Value == null)
+        else if (checkTask.Result.Value == null)
         {
-            menu.errorpanel.gameObject.SetActive(true);
-            menu.errorpanel_text.text = "The tournament is Full";
+            Debug.LogError("Current players count not found in database.");
         }
         else
         {
-            int currentplayers = int.Parse(check.Result.Value.ToString());
+            int currentPlayers = int.Parse(checkTask.Result.Value.ToString());
 
-            var playerstask = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId)).Child(HelperClass.Encrypt(name, playerId)).Child(HelperClass.Encrypt("players", playerId)).GetValueAsync();
-            yield return new WaitUntil(() => playerstask.IsCompleted);
+            var playersTask = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId)).Child(HelperClass.Encrypt(name, playerId)).Child(HelperClass.Encrypt("players", playerId)).GetValueAsync();
+            yield return new WaitUntil(() => playersTask.IsCompleted);
 
-            if (playerstask.Exception != null)
+            if (playersTask.Exception != null)
             {
-                Debug.LogError($"Failed to get player coins: {playerstask.Exception}");
+                Debug.LogError($"Failed to get total players: {playersTask.Exception}");
             }
-            else if (playerstask.Result.Value == null)
+            else if (playersTask.Result.Value == null)
             {
-                Debug.Log("Player not found or coins not set.");
+                Debug.LogError("Total players count not found in database.");
             }
             else
             {
-                int players = int.Parse(playerstask.Result.Value.ToString());
+                int totalPlayers = int.Parse(playersTask.Result.Value.ToString());
 
-                if (currentplayers < players)
+                if (currentPlayers < totalPlayers)
                 {
-                    StartCoroutine(Jointour(name, currentplayers + 1));
+                    // Increment the current players count in the database
+                    StartCoroutine(IncrementCurrentPlayers(name, currentPlayers + 1));
                 }
                 else
                 {
@@ -466,6 +466,32 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
             }
         }
     }
+
+    public IEnumerator IncrementCurrentPlayers(string name, int newCurrentPlayers)
+    {
+        var task = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId)).Child(HelperClass.Encrypt(name, playerId)).Child(HelperClass.Encrypt("currentplayers", playerId)).SetValueAsync(newCurrentPlayers);
+        yield return new WaitUntil(() => task.IsCompleted);
+
+        if (task.Exception != null)
+        {
+            Debug.LogError($"Failed to update current players count: {task.Exception}");
+        }
+        else
+        {
+            // Success
+            Debug.Log("Successfully updated current players count.");
+            tourr.SetActive(true);
+
+            List<string> emptyNames = new List<string>();
+            for (int i = 0; i < 16; i++)
+            {
+                emptyNames.Add("");
+            }
+
+            UpdatePlayerNames(emptyNames, 16);
+        }
+    }
+
 
     public IEnumerator Jointour(string name, int currentplayers)
     {
