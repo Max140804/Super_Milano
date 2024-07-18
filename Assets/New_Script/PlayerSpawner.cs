@@ -10,6 +10,7 @@ public class PlayerSpawner : MonoBehaviour
 
     private void Awake()
     {
-        PhotonNetwork.Instantiate(playerPrefab.name, transform.position, Quaternion.identity);
+        GameObject player = PhotonNetwork.Instantiate(playerPrefab.name, transform.position, Quaternion.identity);
+        player.transform.parent = transform;
     }
 }
