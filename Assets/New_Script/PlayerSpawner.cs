@@ -6,13 +6,13 @@ using Photon.Pun;
 public class PlayerSpawner : MonoBehaviour
 {
     public GameObject playerPrefab;
-    public Transform spawnPoint;
+    //public Transform spawnPoint;
 
     private void Awake()
     {
         if (PhotonNetwork.IsConnectedAndReady)
         {
-            PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
+            PhotonNetwork.Instantiate(playerPrefab.name, transform.position, Quaternion.identity);
         }
         else
         {
@@ -27,6 +27,6 @@ public class PlayerSpawner : MonoBehaviour
             yield return null;
         }
 
-        PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
+        PhotonNetwork.Instantiate(playerPrefab.name, transform.position, Quaternion.identity);
     }
 }

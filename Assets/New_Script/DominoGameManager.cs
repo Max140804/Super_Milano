@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using TMPro;
 using Photon.Pun;
+using Photon.Realtime;
 using Firebase;
 using Firebase.Database;
 using System;
@@ -13,7 +14,7 @@ public enum GameModes
     AllFives
 }
 
-public class DominoGameManager : MonoBehaviour
+public class DominoGameManager : MonoBehaviourPunCallbacks
 {
     public GameObject dominoPrefab;
     public DominoCard[] dominoCards;
@@ -41,11 +42,7 @@ public class DominoGameManager : MonoBehaviour
 
         DealDominoes();
 
-        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task =>
-        {
-            FirebaseApp app = FirebaseApp.DefaultInstance;
-            databaseReference = FirebaseDatabase.DefaultInstance.RootReference;
-        });
+        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task =>{ FirebaseApp app = FirebaseApp.DefaultInstance; databaseReference = FirebaseDatabase.DefaultInstance.RootReference; });
     }
 
     GameObject CreateDominoCard(DominoCard cardData)
@@ -249,6 +246,11 @@ public class DominoGameManager : MonoBehaviour
     {
         var task = databaseReference.Child("players").Child(data.PlayerId).Child("gameResult").SetValueAsync(data.Result);
         yield return new WaitUntil(() => task.IsCompleted);
+    }
+
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        Debug.Log($"{otherPlayer.NickName}, left the room.");
     }
 }
 
