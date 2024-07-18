@@ -18,13 +18,12 @@ public class TournamentSystem : MonoBehaviourPunCallbacks
     public int maxPlayersInputField = 16;
     public GameObject createPanel;
     public GameObject tournamentRoomPanel;
+    public GameObject tournamentViewPanel;
     public TextMeshProUGUI roomName;
-    public GameObject match1v1Panel;
-
     public List<Text> playerNames;
     //public List<Text> readyStatus;
 
-   
+    MainMenu menu;
 
     List<TournamentDisplay> tournamentList = new List<TournamentDisplay>();
     private List<Player> players = new List<Player>();
@@ -35,6 +34,11 @@ public class TournamentSystem : MonoBehaviourPunCallbacks
     private List<NewTournamentCreation> activeTournaments = new List<NewTournamentCreation>();
 
     private Coroutine countdownCoroutine;
+
+    private void Awake()
+    {
+        menu = FindObjectOfType<MainMenu>();
+    }
 
     private void StartCountdown(NewTournamentCreation tournament)
     {
@@ -50,7 +54,7 @@ public class TournamentSystem : MonoBehaviourPunCallbacks
         while (true)
         {
             TimeSpan timeRemaining = tournament.GetTimeRemaining();
-            if (timeRemaining <= TimeSpan.Zero)
+            if (timeRemaining <= TimeSpan.Zero || players.Count == 16)
             {
                 tournament.StartTournament();
                 
@@ -62,17 +66,12 @@ public class TournamentSystem : MonoBehaviourPunCallbacks
     }
 
 
-    // Example method to add players to the tournament
-    public void AddPlayer(string playerName)
+   /* public void AddPlayer(string playerName)
     {
-        if (players.Count < 16) // Adjust maximum players as needed
+        if (players.Count < 16)
         {
             GameObject playerObj = new GameObject(playerName);
-            //Player newPlayer = playerObj.AddComponent<Player>();
-            //players.Add(newPlayer);
             statusText.text = $"{playerName} joined the tournament!";
-
-            // Automatically start the tournament if enough players
             if (players.Count >= 16)
             {
                 StartTournament();
@@ -82,18 +81,9 @@ public class TournamentSystem : MonoBehaviourPunCallbacks
         {
             statusText.text = "Maximum player limit reached.";
         }
-    }
+    }*/
 
-    private void StartTournament()
-    {
-        if (!tournamentStarted)
-        {
-            tournamentStarted = true;
-            CreateMatches();
-        }
-    }
 
-    // Method to create matches for the tournament
     private void CreateMatches()
     {
         int numPlayers = players.Count;
@@ -115,10 +105,10 @@ public class TournamentSystem : MonoBehaviourPunCallbacks
             roomOptions.IsVisible = true;
             roomOptions.IsOpen = true;
             roomOptions.MaxPlayers = 2; // Each match room can accommodate 2 players
-            PhotonNetwork.CreateRoom($"Match_{matchCounter}", roomOptions);
+            //PhotonNetwork.CreateRoom($"Match_{matchCounter}", roomOptions);
 
             // Find the button corresponding to this match and update its text
-            Button matchButton = contentActive.transform.GetChild(i).GetComponent<Button>();
+            /*Button matchButton = contentActive.transform.GetChild(i).GetComponent<Button>();
             if (matchButton != null)
             {
                 Text buttonText = matchButton.GetComponentInChildren<Text>();
@@ -126,14 +116,14 @@ public class TournamentSystem : MonoBehaviourPunCallbacks
                 {
                     buttonText.text = $"Match {matchCounter}: {match.Player1.NickName} vs {match.Player2.NickName} at {match.MatchTime}";
                 }
-            }
+            }*/
         }
     }
 
     public void CreateNewTournament()
     {
         string tournamentName = tournamentNameInputField.text;
-        int maxPlayers = maxPlayersInputField;
+        int maxPlayers = 16;
         if (string.IsNullOrEmpty(tournamentName))
         {
             statusText.text = "Invalid tournament name or player count.";
@@ -142,13 +132,13 @@ public class TournamentSystem : MonoBehaviourPunCallbacks
 
         DateTime startTime = DateTime.Now.AddMinutes(30);
         TimeSpan duration = TimeSpan.FromHours(4);
-
+        menu.players = 16;
         NewTournamentCreation newTournament = new NewTournamentCreation(tournamentName, maxPlayers, startTime, duration);
         availableTournaments.Add(newTournament);
         statusText.text = $"Tournament '{tournamentName}' created with max {maxPlayers} players.";
-
+        tournamentViewPanel.SetActive(true);
         DisplayAvailableTournaments();
-        StartCountdown(newTournament);
+        //StartCountdown(newTournament);
     }
 
     public override void OnCreateRoomFailed(short returnCode, string message)
@@ -165,8 +155,8 @@ public class TournamentSystem : MonoBehaviourPunCallbacks
     {
         Debug.Log("Joined match room!");
         createPanel.SetActive(false);
-        tournamentRoomPanel.SetActive(false);
-        match1v1Panel.SetActive(true);
+        //tournamentRoomPanel.SetActive(false);
+        
         roomName.text = "Room Name: " + PhotonNetwork.CurrentRoom.Name;
     }
 
@@ -228,6 +218,12 @@ public class TournamentSystem : MonoBehaviourPunCallbacks
         activeTournaments.Add(tournament);
         availableTournaments.Remove(tournament);
         DisplayActiveTournaments();
+
+        if (!tournamentStarted)
+        {
+            tournamentStarted = true;
+            CreateMatches();
+        }
     }
 
     // Function to display active tournaments

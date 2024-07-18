@@ -49,10 +49,13 @@ public class MainMenu : MonoBehaviourPunCallbacks
     [Header("Room Data")]
     public List<PlayerDisplay> playersInRoom = new List<PlayerDisplay>();
     public PlayerDisplay playerPrefab;
+    public PlayerDisplay TpurnamentPlayerPrefab;
     public Transform displayParent1v1;
     public Transform displayParent2v2;
+    public Transform displayParentTournament;
     public GameObject playButton1v1;
     public GameObject playButton2v2;
+    public GameObject playButtonTournament;
 
     // Firebase
     private FirebaseAuth auth;
@@ -1152,6 +1155,10 @@ public class MainMenu : MonoBehaviourPunCallbacks
             {
                 playButton2v2.SetActive(true);
             }
+            else if (players == 16)
+            {
+                playButtonTournament.SetActive(true);
+            }
         }
         else
         {
@@ -1162,6 +1169,10 @@ public class MainMenu : MonoBehaviourPunCallbacks
             else if (players == 4)
             {
                 playButton2v2.SetActive(false);
+            }
+            else if (players == 16)
+            {
+                playButtonTournament.SetActive(true);
             }
         }
     }
@@ -1217,15 +1228,26 @@ public class MainMenu : MonoBehaviourPunCallbacks
                 newPlayer = Instantiate(playerPrefab, displayParent2v2);
                 newPlayer.SetPlayerInfo(player.Value);
             }
+            else if(players == 16)
+            {
+                newPlayer = Instantiate(playerPrefab, displayParentTournament);
+                newPlayer.SetPlayerInfo(player.Value);
+            }
 
             playersInRoom.Add(newPlayer);
         }
     }
 
+    public void Choice(int num)
+    {
+        gameNumber = num;
+    }
   
 
     public void OnClickPlayByMaster()
     {
         PhotonNetwork.LoadLevel(gameNumber);
     }
+
+
 }
