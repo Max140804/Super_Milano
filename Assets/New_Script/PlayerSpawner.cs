@@ -10,23 +10,6 @@ public class PlayerSpawner : MonoBehaviour
 
     private void Awake()
     {
-        if (PhotonNetwork.IsConnectedAndReady)
-        {
-            PhotonNetwork.Instantiate(playerPrefab.name, transform.position, Quaternion.identity);
-        }
-        else
-        {
-            StartCoroutine(WaitForConnection());
-        }
-    }
-
-    private IEnumerator WaitForConnection()
-    {
-        while (!PhotonNetwork.IsConnectedAndReady)
-        {
-            yield return null;
-        }
-
         PhotonNetwork.Instantiate(playerPrefab.name, transform.position, Quaternion.identity);
     }
 }
