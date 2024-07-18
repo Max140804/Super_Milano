@@ -399,7 +399,6 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
             Debug.Log("Successfully set tournament bid.");
         }
 
-        // Add the creator to the tournament's players list
         var task4 = menu.databaseReference.Child(HelperClass.Encrypt("players", playerId))
             .Child(HelperClass.Encrypt(menu.playerId, playerId))
             .Child(HelperClass.Encrypt("Tournments", playerId))
