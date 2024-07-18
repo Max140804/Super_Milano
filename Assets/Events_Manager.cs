@@ -108,7 +108,7 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
             Destroy(child.gameObject);
         }
 
-        menu.databaseReference.Child(HelperClass.Encrypt("players", menu.playerId)).Child(HelperClass.Encrypt(menu.playerId, menu.playerId)).Child(HelperClass.Encrypt("Tournments", playerId)).GetValueAsync().ContinueWithOnMainThread(task =>
+        menu.databaseReference.Child("Tournaments").GetValueAsync().ContinueWithOnMainThread(task =>
         {
             if (task.IsFaulted)
             {
@@ -137,10 +137,53 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
         });
     }
 
+    public void GetTournamentsData()
+    {
+        parent.GetComponent<RectTransform>().sizeDelta = new Vector2(parent.GetComponent<RectTransform>().sizeDelta.x, 0);
+        foreach (Transform child in parent.transform)
+        {
+            Destroy(child.gameObject);
+        }
+
+        menu.databaseReference.Child("Tournaments").GetValueAsync().ContinueWithOnMainThread(task =>
+        {
+            if (task.IsFaulted)
+            {
+                Debug.LogError("Error getting data: " + task.Exception);
+            }
+            else if (task.IsCompleted)
+            {
+                DataSnapshot snapshot = task.Result;
+
+                foreach (DataSnapshot childSnapshot in snapshot.Children)
+                {
+                    parent.GetComponent<RectTransform>().sizeDelta = new Vector2(parent.GetComponent<RectTransform>().sizeDelta.x, parent.GetComponent<RectTransform>().sizeDelta.y + 350);
+                    // Assuming each child has some data you want to use
+                    string tournamentName = childSnapshot.Key;
+                    int tournamentplayers = int.Parse(childSnapshot.Child("players").Value.ToString());
+                    float tournamentbid = float.Parse(childSnapshot.Child("bid").Value.ToString());
+                    string tournamenttype = childSnapshot.Child("type").Value.ToString();
+
+                    // Instantiate a GameObject for each tournament
+                    GameObject tournamentObject = Instantiate(tournamentPrefab);
+                    tournamentObject.transform.SetParent(parent.transform);
+
+                    // Set data in the instantiated GameObject
+                    Tournament tournamentComponent = tournamentObject.GetComponent<Tournament>();
+                    if (tournamentComponent != null)
+                    {
+                        tournamentComponent.SetData(tournamentName, tournamenttype, tournamentplayers, tournamentbid);
+                    }
+                }
+
+                Canvas.ForceUpdateCanvases();
+                LayoutRebuilder.ForceRebuildLayoutImmediate(content.GetComponent<RectTransform>());
+            }
+        });
+    }
+
     IEnumerator tour(string key, Tournament tournamentComponent)
     {
-        // Fetch tournament details from database
-        // Example: Fetch name, type, players, bid using coroutines
 
         // Wait until data is fetched
         yield return StartCoroutine(FetchTournamentDetails(key, tournamentComponent));
@@ -282,53 +325,7 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
 
         tournamentComponent.SetData(name, type, players, bid);
     }
-    public void GetTournamentsData()
-    {
-        parent.GetComponent<RectTransform>().sizeDelta = new Vector2(parent.GetComponent<RectTransform>().sizeDelta.x, 0);
-        foreach (Transform child in parent.transform)
-        {
-            Destroy(child.gameObject);
-        }
-        menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId)).GetValueAsync().ContinueWithOnMainThread(task => {
-            if (task.IsFaulted)
-            {
-                // Handle the error
-                Debug.LogError("Error getting data: " + task.Exception);
-            }
-            else if (task.IsCompleted)
-            {
-                DataSnapshot snapshot = task.Result;
-
-                foreach (DataSnapshot childSnapshot in snapshot.Children)
-                {
-                    Debug.Log("xxx");
-
-                    parent.GetComponent<RectTransform>().sizeDelta = new Vector2(parent.GetComponent<RectTransform>().sizeDelta.x, parent.GetComponent<RectTransform>().sizeDelta.y + 350);
-                    // Assuming each child has some data you want to use
-                    string tournamentName = HelperClass.Decrypt(childSnapshot.Key, playerId);
-                    int tournamentplayers = int.Parse(childSnapshot.Child(HelperClass.Encrypt("players", playerId)).Value.ToString());
-                    float tournamentbid = float.Parse(childSnapshot.Child(HelperClass.Encrypt("bid", playerId)).Value.ToString());
-                    string tournamenttype = childSnapshot.Child(HelperClass.Encrypt("type", playerId)).Value.ToString();
-                    Debug.Log("ddddddddddddddd");
-
-                    // Instantiate a GameObject for each tournament
-                    GameObject tournamentObject = Instantiate(tournamentPrefab);
-                    tournamentObject.transform.SetParent(parent.transform);
-
-                    // Set data in the instantiated GameObject
-                    Tournament tournamentComponent = tournamentObject.GetComponent<Tournament>();
-                    if (tournamentComponent != null)
-                    {
-                        tournamentComponent.SetData(tournamentName, tournamenttype, tournamentplayers, tournamentbid);
-                    }
-                }
-
-                Canvas.ForceUpdateCanvases();
-                LayoutRebuilder.ForceRebuildLayoutImmediate(content.GetComponent<RectTransform>());
-
-            }
-        });
-    }
+    
 
     public void Create()
     {
@@ -421,6 +418,7 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
     public void Join(string tournamentname)
     {
         StartCoroutine(JoinTournament(tournamentname));
+
     }
 
     public IEnumerator JoinTournament(string name)
@@ -444,6 +442,42 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
         else
         {
             StartCoroutine(IncrementCurrentPlayers(name));
+
+            yield return StartCoroutine(FetchAndSetPlayerNames(name));
+        }
+    }
+
+    public IEnumerator FetchAndSetPlayerNames(string name)
+    {
+        List<string> playerNames = new List<string>();
+        yield return StartCoroutine(FetchPlayerNames(name, playerNames));
+
+        int currentStage = 16;
+        UpdatePlayerNames(playerNames, currentStage);
+    }
+
+    public IEnumerator FetchPlayerNames(string tournamentName, List<string> playerNames)
+    {
+        string path = $"Tournments/{playerId}/{HelperClass.Encrypt(tournamentName, playerId)}";
+
+        var playersTask = menu.databaseReference.Child(path).GetValueAsync();
+        yield return new WaitUntil(() => playersTask.IsCompleted);
+
+        if (playersTask.Exception != null)
+        {
+            Debug.LogError($"Failed to fetch player names: {playersTask.Exception}");
+        }
+        else if (playersTask.Result.Value != null)
+        {
+            foreach (DataSnapshot playerSnapshot in playersTask.Result.Children)
+            {
+                string playerName = playerSnapshot.Key;
+                playerNames.Add(playerName);
+            }
+        }
+        else
+        {
+            Debug.Log("No players found for this tournament.");
         }
     }
 
@@ -524,7 +558,7 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
                                 emptyNames.Add("");
                             }
 
-                            UpdatePlayerNames(emptyNames, 16);
+                           
                         }
                     }
                 }
@@ -536,8 +570,6 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
             }
         }
     }
-
-
 
     public IEnumerator Jointour(string name, int currentplayers)
     {
