@@ -52,7 +52,7 @@ public class Tournament : MonoBehaviour
 
         if (eventsManager != null && mainMenu != null)
         {
-            eventsManager.Join(nameText.text);
+            eventsManager.JoinTournament(nameText.text);
         }
         else
         {

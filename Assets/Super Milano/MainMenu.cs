@@ -70,7 +70,7 @@ public class MainMenu : MonoBehaviourPunCallbacks
     public FirebaseApp app;
 
     public DatabaseReference databaseReference;
-
+    public List<string> names;
 
     public string playerId;
     public float coins;
@@ -1249,5 +1249,9 @@ public class MainMenu : MonoBehaviourPunCallbacks
         PhotonNetwork.LoadLevel(gameNumber);
     }
 
+    public void SetParticipants()
+    {
+        Debug.Log("Participants set: " + string.Join(", ", names));
+    }
 
 }
