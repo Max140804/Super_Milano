@@ -8,7 +8,6 @@ public class CardVisibilityManager : MonoBehaviourPunCallbacks, IPunObservable
     public Image myCardImage;
     public Image opponentCardImage;
 
-    private Sprite cardVisual;
     private bool isPlayed = false;
 
     private void Awake()
@@ -24,6 +23,7 @@ public class CardVisibilityManager : MonoBehaviourPunCallbacks, IPunObservable
             myCardImage.gameObject.SetActive(false);
             opponentCardImage.gameObject.SetActive(true);
         }
+        Debug.Log("Awake called, myCardImage active: " + myCardImage.gameObject.activeSelf + ", opponentCardImage active: " + opponentCardImage.gameObject.activeSelf);
     }
 
     public void PlayCard()
@@ -32,6 +32,7 @@ public class CardVisibilityManager : MonoBehaviourPunCallbacks, IPunObservable
         {
             isPlayed = true;
             photonView.RPC("RPC_UpdateCardVisibility", RpcTarget.AllBuffered, isPlayed);
+            Debug.Log("PlayCard executed, calling RPC_UpdateCardVisibility with isPlayed: " + isPlayed);
         }
     }
 
@@ -39,12 +40,12 @@ public class CardVisibilityManager : MonoBehaviourPunCallbacks, IPunObservable
     void RPC_UpdateCardVisibility(bool playedState)
     {
         isPlayed = playedState;
+        Debug.Log("RPC_UpdateCardVisibility received, updating isPlayed to: " + isPlayed);
         UpdateCardVisibility();
     }
 
     void UpdateCardVisibility()
     {
-        // Ensure visibility updates based on the current state
         if (photonView.IsMine)
         {
             myCardImage.gameObject.SetActive(!isPlayed);
@@ -55,6 +56,7 @@ public class CardVisibilityManager : MonoBehaviourPunCallbacks, IPunObservable
             myCardImage.gameObject.SetActive(false);
             opponentCardImage.gameObject.SetActive(!isPlayed);
         }
+        Debug.Log("UpdateCardVisibility called, myCardImage active: " + myCardImage.gameObject.activeSelf + ", opponentCardImage active: " + opponentCardImage.gameObject.activeSelf);
     }
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
@@ -62,10 +64,12 @@ public class CardVisibilityManager : MonoBehaviourPunCallbacks, IPunObservable
         if (stream.IsWriting)
         {
             stream.SendNext(isPlayed);
+            Debug.Log("Sending isPlayed: " + isPlayed);
         }
         else
         {
             isPlayed = (bool)stream.ReceiveNext();
+            Debug.Log("Received isPlayed: " + isPlayed);
             UpdateCardVisibility();
         }
     }

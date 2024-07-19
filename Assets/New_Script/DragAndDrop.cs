@@ -19,6 +19,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     private int topValue;
     private int bottomValue;
     public CardVisibilityManager visibilityManager;
+    public TurnManager turn;
 
     private void Awake()
     {
@@ -38,7 +39,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (!TurnManager.Instance.IsMyTurn())
+        if (!turn.IsMyTurn())
         {
             Debug.Log("Not your turn!");
             return;
@@ -58,7 +59,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (!TurnManager.Instance.IsMyTurn())
+        if (!turn.IsMyTurn())
         {
             return;
         }
@@ -70,7 +71,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (!TurnManager.Instance.IsMyTurn())
+        if (!turn.IsMyTurn())
         {
             return;
         }
@@ -107,7 +108,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
             Debug.Log("No collider hit.");
         }
 
-        TurnManager.Instance.EndTurn();
+        turn.EndTurn();
     }
 
     private bool CanSnapToCell(Vector2Int cellIndex, int halfValue, bool isTopHalf)
