@@ -32,6 +32,7 @@ public class MainMenu : MonoBehaviourPunCallbacks
     public GameObject roomGO2v2;
     public TextMeshProUGUI roomGo1v1RoomName;
     public TextMeshProUGUI roomGo2v2RoomName;
+    public GameObject tourRoom;
 
 
     // Registration fields
@@ -65,7 +66,7 @@ public class MainMenu : MonoBehaviourPunCallbacks
     private bool isPhotonLoaded = false;
     private int gameNumber;
     private string _roomName;
-
+    public bool isTournament = false;
 
     public FirebaseApp app;
 
@@ -1072,6 +1073,10 @@ public class MainMenu : MonoBehaviourPunCallbacks
         {
             roomGO2v2.SetActive(true);
             roomGo2v2RoomName.text = "Room Name: " + PhotonNetwork.CurrentRoom.Name;
+        }
+        else if(players == 16)
+        {
+            tourRoom.SetActive(true);
         }
 
         UpdatePlayerList();

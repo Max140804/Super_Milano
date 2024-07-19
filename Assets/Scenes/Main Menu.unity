@@ -31657,6 +31657,7 @@ MonoBehaviour:
   CurrentTourParent: {fileID: 2143387241}
   content: {fileID: 1969908051}
   tourr: {fileID: 771832047}
+  tourrName: {fileID: 1225881084}
   menu: {fileID: 1636957250}
   names16UI:
   - {fileID: 46042306}
@@ -48177,6 +48178,7 @@ MonoBehaviour:
   roomGO2v2: {fileID: 348530755}
   roomGo1v1RoomName: {fileID: 128416916}
   roomGo2v2RoomName: {fileID: 1244864080}
+  tourRoom: {fileID: 771832047}
   regEmailInputField: {fileID: 5242834431341253499}
   regPasswordInputField: {fileID: 4147886551691285276}
   regRepeatPasswordInputField: {fileID: 7341670181957422791}
@@ -48194,6 +48196,7 @@ MonoBehaviour:
   playButton1v1: {fileID: 1752161239}
   playButton2v2: {fileID: 670816042}
   playButtonTournament: {fileID: 537252039}
+  isTournament: 0
   names: []
   playerId: 
   coins: 0

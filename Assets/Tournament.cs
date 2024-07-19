@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using Photon.Pun;
 
 public class Tournament : MonoBehaviour
 {
@@ -15,6 +16,8 @@ public class Tournament : MonoBehaviour
     public GameObject loading;
 
     public Image image;
+
+    
 
     public void SetData(string name, string type, int players, float bid)
     {

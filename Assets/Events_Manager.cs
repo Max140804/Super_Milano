@@ -10,18 +10,21 @@ using UnityEngine.UI;
 using System.Security.Cryptography;
 using Photon.Pun;
 using Photon.Realtime;
+using TMPro;
 using ExitGames.Client.Photon;
 
 public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
 {
     string playerId = "234353423";
 
-    public GameObject tournamentPrefab;
+    public Tournament tournamentPrefab;
+    List<Tournament> tourPrefList = new List<Tournament>();
     public GameObject parent;
     public GameObject CurrentTourParent;
     public GameObject content;
 
     public GameObject tourr;
+    public TextMeshProUGUI tourrName;
     public MainMenu menu;
 
     public List<Text> names16UI;
@@ -50,6 +53,8 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
     private const byte TournamentMatchEndEventCode = 1;
     int playersInRoom = 0;
     bool playerAlreadyInTour;
+    float timeBtwUpdt = 1.5f;
+    float nextUpdtTime;
 
     private void Awake()
     {
@@ -63,6 +68,15 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
     void OnDestroy()
     {
         PhotonNetwork.RemoveCallbackTarget(this);
+    }
+
+    private void Update()
+    {
+        if (PhotonNetwork.InRoom)
+        {
+            menu.errorpanel.gameObject.SetActive(true);
+            menu.errorpanel_text.text = "You are already in a room, please leave room before creating another.";
+        }
     }
 
     public void OnEvent(EventData photonEvent)
@@ -128,18 +142,7 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
                 {
                     Debug.Log(childSnapshot.Key);
                     CurrentTourParent.GetComponent<RectTransform>().sizeDelta = new Vector2(CurrentTourParent.GetComponent<RectTransform>().sizeDelta.x, CurrentTourParent.GetComponent<RectTransform>().sizeDelta.y + 350);
-
-                    // Instantiate a GameObject for each tournament
-                    GameObject tournamentObject = Instantiate(tournamentPrefab);
-                    tournamentObject.transform.SetParent(CurrentTourParent.transform, false);
-
-                    // Set data in the instantiated GameObject
-                    Tournament tournamentComponent = tournamentObject.GetComponent<Tournament>();
-                    StartCoroutine(tour(childSnapshot.Key, tournamentComponent));
                 }
-
-                Canvas.ForceUpdateCanvases();
-                LayoutRebuilder.ForceRebuildLayoutImmediate(content.GetComponent<RectTransform>());
             }
         });
     }
@@ -169,10 +172,6 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
                     int tournamentplayers = int.Parse(childSnapshot.Child("players").Value.ToString());
                     float tournamentbid = float.Parse(childSnapshot.Child("bid").Value.ToString());
                     string tournamenttype = childSnapshot.Child("type").Value.ToString();
-
-                    GameObject tournamentObject = Instantiate(tournamentPrefab);
-                    tournamentObject.transform.parent = parent.transform;
-                    tournamentObject.GetComponent<Tournament>().SetData(tournamentName, tournamenttype, tournamentplayers, tournamentbid);
                 }
 
                 Canvas.ForceUpdateCanvases();
@@ -323,11 +322,16 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
         if (tournamenttype == "Domino")
         {
             tournamentplayers = 16;
+            menu.players = 16;
         }
         StartCoroutine(createtournment());
-
+        menu.isTournament = true;
+        Instantiate(tournamentPrefab, content.transform);
+        PhotonNetwork.CreateRoom(tournamentname.text, new RoomOptions() { MaxPlayers = tournamentplayers, EmptyRoomTtl = 300000, PlayerTtl = 30000 }, TypedLobby.Default);
         GetTournamentsData();
     }
+
+
     public IEnumerator createtournment()
     {
         var check = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId)).Child(HelperClass.Encrypt(tournamentname.text, playerId)).GetValueAsync();
@@ -393,15 +397,14 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
         names16UI[0].text = menu.usernamee;
 
         GetCurrentTournamentsData();
-        GameObject tournamentObject = Instantiate(tournamentPrefab);
-        tournamentObject.transform.parent = parent.transform;
-        tournamentObject.GetComponent<Tournament>().SetData(name, type, players, bid);
-
+       
         tourr.SetActive(true);
     }
 
     public void Join(string tournamentname)
     {
+        //PhotonNetwork.JoinRoom(tournamentname);
+
         if (playerAlreadyInTour)
         {
             tourr.SetActive(true);
@@ -460,12 +463,12 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
         }
         else if (playersTask.Result.Value != null)
         {
-            int currentStage = 16;
+           // int currentStage = 16;
 
             foreach (DataSnapshot playerSnapshot in playersTask.Result.Children)
             {
                 string playerName = playerSnapshot.Key;
-                UpdatePlayerNames(playerName, currentStage);
+                //UpdatePlayerNames(playerName, currentStage);
                 Debug.Log(name + " Joined");
             }
         }
@@ -567,7 +570,7 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
                             Debug.Log("Successfully joined tournament.");
                             Debug.Log(name);
                             tourr.SetActive(true);
-                            UpdatePlayerNames(menu.usernamee, 16);
+                            //UpdatePlayerNames(menu.usernamee, 16);
                         }
                     }
                 }
@@ -659,49 +662,58 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
             PhotonNetwork.RaiseEvent(TournamentMatchEndEventCode, content, raiseEventOptions, sendOptions);
         }
     }
-    public void UpdatePlayerNames(string playerName, int stage)
+
+    public override void OnJoinedRoom()
     {
-        switch (stage)
-        {
-            case 16:
-                for (int i = 0; i < names16.Count; i++)
-                {
-                    names16UI[i].text = playerName;
-                    break;
-                }
-                break;
-            case 8:
-                for (int i = 0; i < names8.Count; i++)
-                {
-                    if (string.IsNullOrEmpty(names8UI[i].text))
-                    {
-                        names8UI[i].text = playerName;
-                        break;
-                    }
-                }
-                break;
-            case 4:
-                for (int i = 0; i < names4.Count; i++)
-                {
-                    if (string.IsNullOrEmpty(names4UI[i].text))
-                    {
-                        names4UI[i].text = playerName;
-                        break;
-                    }
-                }
-                break;
-            case 2:
-                for (int i = 0; i < names2.Count; i++)
-                {
-                    if (string.IsNullOrEmpty(names2UI[i].text))
-                    {
-                        names2UI[i].text = playerName;
-                        break;
-                    }
-                }
-                break;
-        }
+        tourr.SetActive(true);
+        tourrName.text = PhotonNetwork.CurrentRoom.Name;
     }
 
+    public override void OnRoomListUpdate(List<RoomInfo> roomList)
+    {
+        UpdateRoomList(roomList);
+        /*if (Time.time >= nextUpdtTime)
+        {
+            UpdateRoomList(roomList);
+            nextUpdtTime = Time.time + timeBtwUpdt;
+        }*/
 
+        
+    }
+
+    void UpdateRoomList(List<RoomInfo> list)
+    {
+        foreach (Tournament item in tourPrefList)
+        {
+            Destroy(item.gameObject);
+        }
+        tourPrefList.Clear();
+
+        foreach (RoomInfo room in list)
+        {
+            Tournament newTour = Instantiate(tournamentPrefab, content.transform);
+
+            menu.databaseReference.Child("Tournaments").GetValueAsync().ContinueWithOnMainThread(task =>
+            {
+                if (task.IsFaulted)
+                {
+                    Debug.LogError("Error getting data: " + task.Exception);
+                }
+                else if (task.IsCompleted)
+                {
+                    DataSnapshot snapshot = task.Result;
+                        
+                    string tournamentName = snapshot.Key;
+                    int tournamentplayers = int.Parse(snapshot.Child("players").Value.ToString());
+                    float tournamentbid = float.Parse(snapshot.Child("bid").Value.ToString());
+                    string tournamenttype = snapshot.Child("type").Value.ToString();
+
+                    newTour.SetData(tournamentName, tournamenttype, tournamentplayers, tournamentbid); 
+                    tourPrefList.Add(newTour);
+                }
+            });
+
+           
+        }
+    }
 }
