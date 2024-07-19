@@ -8,24 +8,18 @@ public class CardVisibilityManager : MonoBehaviourPunCallbacks
     public Image myCardImage;
     public Image opponentCardImage;
 
-    private bool isPlayed = false;
-    DominoGameManager cardManager;
+    PhotonView view;
+        
 
     private void Awake()
     {
-        cardManager = FindObjectOfType<DominoGameManager>();
+        view = GetComponent<PhotonView>();
 
-        if (photonView.IsMine || cardManager.InBoneyard)
-        {
-            myCardImage.gameObject.SetActive(true);
-            opponentCardImage.gameObject.SetActive(false);
-        }
-        else
-        {
-            myCardImage.gameObject.SetActive(false);
-            opponentCardImage.gameObject.SetActive(true);
-        }
-        Debug.Log("Awake called, myCardImage active: " + myCardImage.gameObject.activeSelf + ", opponentCardImage active: " + opponentCardImage.gameObject.activeSelf);
+        if (!view.IsMine)
+            return;
+
+        myCardImage.gameObject.SetActive(true);
+        opponentCardImage.gameObject.SetActive(false);
     }
 
     
