@@ -139,13 +139,4 @@ public class CardData : MonoBehaviourPun
             return null;
         }
     }
-
-    private void ToggleAddButton(GameObject domino, bool active)
-    {
-        GameObject addButton = domino.transform.Find("AddButton").gameObject;
-        if (addButton != null)
-        {
-            addButton.SetActive(active);
-        }
-    }
 }

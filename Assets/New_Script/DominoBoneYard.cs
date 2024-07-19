@@ -23,6 +23,7 @@ public class DominoBoneYard : MonoBehaviour
         domino.transform.localScale = Vector3.one;
 
         ToggleAddButton(domino, true);
+        gameManager.InBoneyard = true;
     }
 
     public bool RemoveFromBoneYard(GameObject domino)
@@ -30,7 +31,7 @@ public class DominoBoneYard : MonoBehaviour
         if (boneyard.Contains(domino))
         {
             boneyard.Remove(domino);
-
+            gameManager.InBoneyard = true;
             ToggleAddButton(domino, false);
 
             return true;
@@ -64,7 +65,7 @@ public class DominoBoneYard : MonoBehaviour
         {
             boneYard.RemoveFromBoneYard(gameObject);
             hand.AddToHand(gameObject);
-
+            gameManager.InBoneyard = false;
             ToggleAddButton(gameObject, false);
         }
         else

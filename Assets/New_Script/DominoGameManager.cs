@@ -29,19 +29,20 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
     private DatabaseReference databaseReference;
 
     public GameModes gameMode = GameModes.OneVsOne;
-    public bool isTournamentGame = false; // Flag to check if this is a tournament game
-
-    // Define a custom event code
+    public bool isTournamentGame = false;
+    TurnManager turn;
+    public bool InBoneyard;
+    
     private const byte TournamentMatchEndEventCode = 1;
+
+    private void Awake()
+    {
+        turn = FindObjectOfType<TurnManager>();
+    }
 
     void Start()
     {
-        foreach (var card in dominoCards)
-        {
-            GameObject domino = CreateDominoCard(card);
-            allDominoes.Add(domino);
-        }
-
+        InitializeDominoes();
         players.AddRange(FindObjectsOfType<DominoHand>());
         boneYard = FindObjectOfType<DominoBoneYard>();
 
@@ -52,6 +53,15 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
             FirebaseApp app = FirebaseApp.DefaultInstance;
             databaseReference = FirebaseDatabase.DefaultInstance.RootReference;
         });
+    }
+
+    void InitializeDominoes()
+    {
+        foreach (var card in dominoCards)
+        {
+            GameObject domino = CreateDominoCard(card);
+            allDominoes.Add(domino);
+        }
     }
 
     GameObject CreateDominoCard(DominoCard cardData)
@@ -91,6 +101,7 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
                     domino.transform.localRotation = Quaternion.identity;
                     domino.transform.localScale = Vector3.one;
                     player.AddToHand(domino);
+                    InBoneyard = false;
                     currentDominoIndex++;
                 }
             }
@@ -105,6 +116,7 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
             domino.transform.localRotation = Quaternion.identity;
             domino.transform.localScale = Vector3.one;
             boneYard.AddToBoneYard(domino);
+            InBoneyard = true;
         }
     }
 
@@ -115,9 +127,9 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
             case GameModes.OneVsOne:
                 return 7;
             case GameModes.AllFives:
-                return 5; // Change this value as needed for your game mode
+                return 5;
             default:
-                return 7; // Default to 7 tiles per player
+                return 7;
         }
     }
 
@@ -180,30 +192,27 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
                 {
                     scoreToAdd = totalRemainingValues;
 
-                    // Round score to the nearest higher multiple of five if game mode is AllFives
+                    
                     if (gameMode == GameModes.AllFives)
                     {
-                        scoreToAdd = ((scoreToAdd + 4) / 5) * 5; // Round up to the nearest higher multiple of 5
+                        scoreToAdd = ((scoreToAdd + 4) / 5) * 5;
                     }
 
-                    player.totalScore += scoreToAdd;
+                    player.UpdateScore(player.totalScore + scoreToAdd);
                     StartCoroutine(UpdateGameResult(new GameResultData { PlayerId = player.gameObject.name, Result = scoreToAdd }));
                 }
                 else
                 {
-                    player.totalScore += 0; // Player who lost gets 0 points
-                    StartCoroutine(UpdateGameResult(new GameResultData { PlayerId = player.gameObject.name, Result = 0 })); // Save 0 for the player who lost
+                    player.UpdateScore(player.totalScore);
+                    StartCoroutine(UpdateGameResult(new GameResultData { PlayerId = player.gameObject.name, Result = 0 }));
                 }
-
-                player.UpdateScoreText();
             }
 
             Debug.Log($"Game Over! The winning player is {winningPlayer.gameObject.name} with a total remaining value of {totalRemainingValues} for other players.");
 
-            // Check if this is a tournament game
             if (isTournamentGame)
             {
-                // Check if any player has reached the final score
+               
                 if (CheckForFinalScore())
                 {
                     EndTournamentMatch();
@@ -215,10 +224,11 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
             }
             else
             {
-                // Non-tournament game
+               
                 if (CheckForFinalScore())
                 {
                     EndMatch();
+                    Debug.Log($"Game Over! The winning player is {winningPlayer.gameObject.name} with a total remaining value of {totalRemainingValues} for other players.");
                 }
                 else
                 {
@@ -231,6 +241,7 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
             Debug.LogError("Game Over called but no player has an empty hand.");
         }
     }
+
 
     bool CheckForFinalScore()
     {
@@ -246,9 +257,8 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
 
     void EndMatch()
     {
-        // Handle match end logic, e.g., display winner, save results, etc.
         Debug.Log("Match has ended as a player has reached the final score.");
-        // Additional logic to handle match end can be added here
+        PhotonNetwork.LoadLevel(0);
     }
 
     void EndTournamentMatch()

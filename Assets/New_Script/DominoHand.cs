@@ -1,8 +1,9 @@
+using Photon.Pun;
 using System.Collections.Generic;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 
-public class DominoHand : MonoBehaviour
+public class DominoHand : MonoBehaviourPun
 {
     private List<GameObject> hand = new List<GameObject>();
     public int totalScore;
@@ -70,17 +71,23 @@ public class DominoHand : MonoBehaviour
         }
     }
 
-    public void UpdateScoreText()
+    [PunRPC]
+    public void UpdateScoreText(int newScore)
     {
+        totalScore = newScore;
         if (scoreText != null)
         {
             scoreText.text = totalScore.ToString();
         }
     }
 
+    public void UpdateScore(int newScore)
+    {
+        photonView.RPC("UpdateScoreText", RpcTarget.AllBuffered, newScore);
+    }
+
     public void CollectAllCards(List<GameObject> allDominoes)
     {
-        // Add logic to collect all cards back into the allDominoes list
         foreach (Transform child in transform)
         {
             allDominoes.Add(child.gameObject);
@@ -91,7 +98,6 @@ public class DominoHand : MonoBehaviour
 
     public void ClearHand()
     {
-        // Clear the hand list
         hand.Clear();
     }
 }
