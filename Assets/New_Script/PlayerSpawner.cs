@@ -7,9 +7,15 @@ using Photon.Realtime;
 public class PlayerSpawner : MonoBehaviourPunCallbacks
 {
     public GameObject playerPrefab;
+
     private Dictionary<int, GameObject> spawnedPlayers = new Dictionary<int, GameObject>();
 
     private void Awake()
+    {
+       SpawnAllPlayers();
+    }
+
+    public override void OnJoinedRoom()
     {
         SpawnAllPlayers();
     }
@@ -32,7 +38,6 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
 
     private void SpawnPlayer(Player player)
     {
-        
         if (playerPrefab != null)
         {
             Vector3 spawnPosition = transform.position;
@@ -40,6 +45,7 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
 
             GameObject playerInstance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPosition, spawnRotation);
             playerInstance.transform.parent = transform;
+            playerInstance.GetComponent<DominoPlayerData>().SetPlayerName(player.NickName);
 
             spawnedPlayers[player.ActorNumber] = playerInstance;
         }

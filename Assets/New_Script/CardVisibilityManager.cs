@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using Photon.Pun;
+using Photon.Realtime;
 
 public class CardVisibilityManager : MonoBehaviourPunCallbacks, IPunObservable
 {
@@ -8,9 +9,9 @@ public class CardVisibilityManager : MonoBehaviourPunCallbacks, IPunObservable
     public Image opponentCardImage;
 
     private Sprite cardVisual;
-    private bool isPlayed; // Track if the card has been played
+    private bool isPlayed = false;
 
-    private void Start()
+    private void Awake()
     {
         if (photonView.IsMine)
         {
@@ -42,8 +43,16 @@ public class CardVisibilityManager : MonoBehaviourPunCallbacks, IPunObservable
 
     void UpdateCardVisibility()
     {
-        myCardImage.gameObject.SetActive(!isPlayed);
-        opponentCardImage.gameObject.SetActive(isPlayed);
+        if (photonView.IsMine)
+        {
+            myCardImage.gameObject.SetActive(!isPlayed);
+            opponentCardImage.gameObject.SetActive(false);
+        }
+        else
+        {
+            myCardImage.gameObject.SetActive(false);
+            opponentCardImage.gameObject.SetActive(!isPlayed);
+        }
     }
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)

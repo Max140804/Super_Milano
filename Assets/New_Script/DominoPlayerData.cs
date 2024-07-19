@@ -5,9 +5,9 @@ using Photon.Pun;
 public class DominoPlayerData : MonoBehaviourPunCallbacks
 {
     public TextMeshProUGUI playerNameText;
-    private string playerName;
+    [HideInInspector]public string playerName;
 
-    void Start()
+    void Awake()
     {
         if (photonView.IsMine)
         {
@@ -18,10 +18,15 @@ public class DominoPlayerData : MonoBehaviourPunCallbacks
     }
 
     [PunRPC]
-    void RPC_SetPlayerName(string newPlayerName)
+    public void RPC_SetPlayerName(string newPlayerName)
     {
         playerName = newPlayerName;
         playerNameText.text = playerName;
         Debug.Log("Player name set to: " + playerName);
+    }
+
+    public void SetPlayerName(string newPlayerName)
+    {
+        playerNameText.text = newPlayerName;
     }
 }
