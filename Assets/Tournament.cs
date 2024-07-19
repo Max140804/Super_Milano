@@ -43,7 +43,6 @@ public class Tournament : MonoBehaviour
         coin_icon.SetActive(true);
         loading.SetActive(false);
 
-        // Remove any existing listeners to avoid multiple subscriptions
         button.onClick.RemoveAllListeners();
         button.onClick.AddListener(OnClickJoin);
     }

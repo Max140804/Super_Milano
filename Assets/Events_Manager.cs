@@ -233,7 +233,7 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
             bid = float.Parse(bidTask.Result.Value.ToString());
         }
 
-        tournamentComponent.SetData(name, type, players, bid);
+        //tournamentComponent.SetData(name, type, players, bid);
     }
     IEnumerator FetchNameAsync(string key)
     {
@@ -315,7 +315,7 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
             // Do something with the retrieved coins, e.g., update UI
         }
 
-        tournamentComponent.SetData(name, type, players, bid);
+        //tournamentComponent.SetData(name, type, players, bid);
     }
     public void Create()
     {
@@ -330,8 +330,6 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
         PhotonNetwork.CreateRoom(tournamentname.text, new RoomOptions() { MaxPlayers = tournamentplayers, EmptyRoomTtl = 300000, PlayerTtl = 30000 }, TypedLobby.Default);
         GetTournamentsData();
     }
-
-
     public IEnumerator createtournment()
     {
         var check = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId)).Child(HelperClass.Encrypt(tournamentname.text, playerId)).GetValueAsync();
@@ -400,7 +398,6 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
        
         tourr.SetActive(true);
     }
-
     public void Join(string tournamentname)
     {
         //PhotonNetwork.JoinRoom(tournamentname);
@@ -662,13 +659,11 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
             PhotonNetwork.RaiseEvent(TournamentMatchEndEventCode, content, raiseEventOptions, sendOptions);
         }
     }
-
     public override void OnJoinedRoom()
     {
         tourr.SetActive(true);
         tourrName.text = PhotonNetwork.CurrentRoom.Name;
     }
-
     public override void OnRoomListUpdate(List<RoomInfo> roomList)
     {
         UpdateRoomList(roomList);
@@ -680,7 +675,6 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
 
         
     }
-
     void UpdateRoomList(List<RoomInfo> list)
     {
         foreach (Tournament item in tourPrefList)

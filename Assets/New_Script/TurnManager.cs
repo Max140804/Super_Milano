@@ -1,11 +1,13 @@
 using UnityEngine;
 using TMPro;
 using Photon.Pun;
+using Photon.Realtime;
 
-public class TurnManager : MonoBehaviourPun
+public class TurnManager : MonoBehaviourPunCallbacks
 {
     public static TurnManager Instance;
     public TextMeshProUGUI turnText;
+
     private int currentPlayerIndex;
     private int totalPlayers;
 
@@ -41,7 +43,7 @@ public class TurnManager : MonoBehaviourPun
 
     public bool IsMyTurn()
     {
-        return PhotonNetwork.LocalPlayer.ActorNumber == (currentPlayerIndex + 1);
+        return PhotonNetwork.LocalPlayer.ActorNumber == PhotonNetwork.PlayerList[currentPlayerIndex].ActorNumber;
     }
 
     public void EndTurn()
@@ -77,5 +79,21 @@ public class TurnManager : MonoBehaviourPun
         {
             turnText.text = "Waiting for players...";
         }
+    }
+    public override void OnPlayerEnteredRoom(Player newPlayer)
+    {
+        totalPlayers = PhotonNetwork.PlayerList.Length;
+        UpdateTurnText();
+    }
+
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        totalPlayers = PhotonNetwork.PlayerList.Length;
+        if (PhotonNetwork.IsMasterClient && currentPlayerIndex >= totalPlayers)
+        {
+            currentPlayerIndex = 0;
+            photonView.RPC("RPC_SetCurrentPlayerIndex", RpcTarget.All, currentPlayerIndex);
+        }
+        UpdateTurnText();
     }
 }
