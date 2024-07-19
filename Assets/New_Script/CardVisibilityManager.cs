@@ -11,7 +11,7 @@ public class CardVisibilityManager : MonoBehaviourPunCallbacks
     PhotonView view;
         
 
-    private void Awake()
+    private void Start()
     {
         view = GetComponent<PhotonView>();
 

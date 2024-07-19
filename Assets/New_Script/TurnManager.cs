@@ -51,6 +51,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
         if (PhotonNetwork.IsMasterClient)
         {
             currentPlayerIndex = (currentPlayerIndex + 1) % totalPlayers;
+            Debug.Log("Turn ended. Next player index: " + currentPlayerIndex);
             photonView.RPC("RPC_SetCurrentPlayerIndex", RpcTarget.All, currentPlayerIndex);
         }
     }
@@ -74,26 +75,33 @@ public class TurnManager : MonoBehaviourPunCallbacks
         {
             string playerName = PhotonNetwork.PlayerList[currentPlayerIndex].NickName;
             turnText.text = $"It's {playerName}'s turn";
+            Debug.Log($"It's {playerName}'s turn");
         }
         else
         {
             turnText.text = "Waiting for players...";
+            Debug.Log("Waiting for players...");
         }
     }
+
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
         totalPlayers = PhotonNetwork.PlayerList.Length;
         UpdateTurnText();
+        Debug.Log(newPlayer.NickName + " entered the room. Total players: " + totalPlayers);
     }
 
     public override void OnPlayerLeftRoom(Player otherPlayer)
     {
         totalPlayers = PhotonNetwork.PlayerList.Length;
-        if (PhotonNetwork.IsMasterClient && currentPlayerIndex >= totalPlayers)
+
+        if (PhotonNetwork.IsMasterClient)
         {
-            currentPlayerIndex = 0;
+            currentPlayerIndex = currentPlayerIndex % totalPlayers;
             photonView.RPC("RPC_SetCurrentPlayerIndex", RpcTarget.All, currentPlayerIndex);
         }
+
         UpdateTurnText();
+        Debug.Log(otherPlayer.NickName + " left the room. Total players: " + totalPlayers);
     }
 }
