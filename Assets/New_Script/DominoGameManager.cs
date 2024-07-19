@@ -38,6 +38,7 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
     private void Awake()
     {
         turn = FindObjectOfType<TurnManager>();
+        PhotonNetwork.AutomaticallySyncScene = true;
     }
 
     void Start()
