@@ -19,7 +19,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     private int topValue;
     private int bottomValue;
     public CardVisibilityManager visibilityManager;
-    public TurnManager turn;
+    TurnManager turn;
 
     private void Awake()
     {
@@ -27,6 +27,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         canvas = FindObjectOfType<Canvas>();
         canvasGroup = GetComponent<CanvasGroup>();
         grid = FindObjectOfType<Grid>();
+        turn = FindObjectOfType<TurnManager>();
         cardData = GetComponent<CardData>();
         visibilityManager = GetComponent<CardVisibilityManager>();
     }
