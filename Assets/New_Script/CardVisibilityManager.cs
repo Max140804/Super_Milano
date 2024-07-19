@@ -13,6 +13,7 @@ public class CardVisibilityManager : MonoBehaviourPunCallbacks, IPunObservable
 
     private void Awake()
     {
+        // Initialize visibility based on ownership
         if (photonView.IsMine)
         {
             myCardImage.gameObject.SetActive(true);
@@ -43,6 +44,7 @@ public class CardVisibilityManager : MonoBehaviourPunCallbacks, IPunObservable
 
     void UpdateCardVisibility()
     {
+        // Ensure visibility updates based on the current state
         if (photonView.IsMine)
         {
             myCardImage.gameObject.SetActive(!isPlayed);

@@ -1241,6 +1241,7 @@ public class MainMenu : MonoBehaviourPunCallbacks
     public void Choice(int num)
     {
         gameNumber = num;
+        Debug.Log(gameNumber);
     }
   
 
