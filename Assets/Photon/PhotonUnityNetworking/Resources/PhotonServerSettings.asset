@@ -61,6 +61,7 @@ MonoBehaviour:
   - RPC_AddDominoToPlayerHand
   - RPC_UpdateCardVisibility
   - CreateTournamentRPC
+  - UpdateScoreText
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 0
