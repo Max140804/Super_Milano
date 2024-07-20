@@ -15,6 +15,8 @@ public class CardData : MonoBehaviourPun
 
     private DragAndDrop dragAndDrop;
     private DominoGameManager gameManager;
+    private DominoBoneYard yard;
+    private DominoHand hand;
     private GetValue[] values;
 
     private void Awake()
@@ -22,6 +24,7 @@ public class CardData : MonoBehaviourPun
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         dragAndDrop = GetComponent<DragAndDrop>();
         gameManager = FindObjectOfType<DominoGameManager>();
+        yard = FindObjectOfType<DominoBoneYard>();
         values = GetComponentsInChildren<GetValue>();
     }
 
@@ -92,7 +95,13 @@ public class CardData : MonoBehaviourPun
 
     public void AddFromBoneYard()
     {
-        OnAddButtonClick();
+        if (PhotonNetwork.LocalPlayer.IsMasterClient)
+        {
+            //photonView.RPC("RPC_AddDominoToPlayerHand", RpcTarget.All, PhotonNetwork.LocalPlayer.ActorNumber);
+            Player player = PhotonNetwork.CurrentRoom.GetPlayer(PhotonNetwork.LocalPlayer.ActorNumber);
+            DominoHand playerHand = GetPlayerHand(player);
+            yard.AddToHand(playerHand);
+        }
     }
 
     private void OnAddButtonClick()
@@ -120,10 +129,39 @@ public class CardData : MonoBehaviourPun
 
     private DominoHand GetPlayerHand(Player player)
     {
-        
-        return GameObject.Find($"Player{player.ActorNumber}Hand").GetComponent<DominoHand>();
-       
+        int currentPlayerIndex = 0;
+        if (PhotonNetwork.IsMasterClient)
+        {
+            currentPlayerIndex = 0;
+        }
+        else if (!PhotonNetwork.IsMasterClient)
+        {
+            for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
+            {
+                if (PhotonNetwork.PlayerList[i].ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber)
+                {
+                    currentPlayerIndex = i;
+                    break;
+                }
+            }
+        }
+
+        Player targetPlayer = PhotonNetwork.PlayerList[currentPlayerIndex];
+
+        GameObject playerObject = GameObject.Find(targetPlayer.ActorNumber.ToString());
+        if (playerObject != null)
+        {
+            return playerObject.GetComponentInChildren<DominoHand>();
+        }
+        else
+        {
+            Debug.LogError($"Player object with ActorNumber {targetPlayer.ActorNumber} not found.");
+            return null;
+        }
     }
+
+
+
 
     private GameObject GetDominoFromBoneYard()
     {
