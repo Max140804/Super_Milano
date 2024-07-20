@@ -86,6 +86,11 @@ public class DominoHand : MonoBehaviourPun
         photonView.RPC("UpdateScoreText", RpcTarget.AllBuffered, newScore);
     }
 
+    public List<GameObject> GetDominoesInHand()
+    {
+        return new List<GameObject>(hand);
+    }
+
     public void CollectAllCards(List<GameObject> allDominoes)
     {
         foreach (Transform child in transform)

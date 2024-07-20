@@ -1,7 +1,8 @@
+using Photon.Pun;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPunObservable
 {
     private RectTransform rectTransform;
     private Canvas canvas;
@@ -13,6 +14,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     private DominoBoneYard originalBoneYard;
     public bool isBottomHalf;
     private Vector3 offset;
+    private PhotonView photonView;
 
     public RectTransform topHalf;
     public RectTransform bottomHalf;
@@ -30,6 +32,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         turn = FindObjectOfType<TurnManager>();
         cardData = GetComponent<CardData>();
         visibilityManager = GetComponent<CardVisibilityManager>();
+        photonView = GetComponent<PhotonView>();
     }
 
     private void Start()
@@ -40,9 +43,9 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (!turn.IsMyTurn())
+        if (!photonView.IsMine || !turn.IsMyTurn())
         {
-            Debug.Log("Not your turn!");
+            Debug.Log("Not your turn or not your object!");
             return;
         }
 
@@ -60,7 +63,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (!turn.IsMyTurn())
+        if (!photonView.IsMine || !turn.IsMyTurn())
         {
             return;
         }
@@ -72,7 +75,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (!turn.IsMyTurn())
+        if (!photonView.IsMine || !turn.IsMyTurn())
         {
             return;
         }
@@ -108,6 +111,8 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
             ResetPosition();
             Debug.Log("No collider hit.");
         }
+
+        photonView.RPC("DistributeCardPositions", RpcTarget.All);
 
         turn.EndTurn();
     }
@@ -216,5 +221,42 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     {
         Vector2Int currentCellIndex = grid.GetCellIndexFromPosition(rectTransform.position);
         SnapToCells(currentCellIndex);
+    }
+
+    [PunRPC]
+    private void DistributeCardPositions()
+    {
+        DominoHand[] allPlayers = FindObjectsOfType<DominoHand>();
+
+        foreach (DominoHand player in allPlayers)
+        {
+            GameObject[] playerDominoes = player.GetDominoesInHand();
+
+            for (int i = 0; i < playerDominoes.Length; i++)
+            {
+                GameObject domino = playerDominoes[i];
+                domino.transform.localPosition = GetPositionForDomino(player, i);
+            }
+        }
+    }
+
+    private Vector3 GetPositionForDomino(DominoHand player, int index)
+    {
+        float spacing = 1.5f;
+        return new Vector3(index * spacing, 0, 0); // Distribute horizontally
+    }
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if (stream.IsWriting)
+        {
+            stream.SendNext(rectTransform.position);
+            stream.SendNext(rectTransform.rotation);
+        }
+        else
+        {
+            rectTransform.position = (Vector3)stream.ReceiveNext();
+            rectTransform.rotation = (Quaternion)stream.ReceiveNext();
+        }
     }
 }
