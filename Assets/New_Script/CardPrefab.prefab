@@ -131,6 +131,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d98999db1027558469a6d6e3a9e09165, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isBottomHalf: 0
   topHalf: {fileID: 6048193678491808569}
   bottomHalf: {fileID: 554786974744248437}
   visibilityManager: {fileID: 8153480149065946403}
@@ -251,6 +252,8 @@ GameObject:
   - component: {fileID: 6866959308509116688}
   - component: {fileID: 3428955664103977386}
   - component: {fileID: 4266091791638092744}
+  - component: {fileID: 3800555676483790943}
+  - component: {fileID: 3420922500227380132}
   m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
@@ -366,6 +369,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d98999db1027558469a6d6e3a9e09165, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isBottomHalf: 1
   topHalf: {fileID: 6048193678491808569}
   bottomHalf: {fileID: 554786974744248437}
   visibilityManager: {fileID: 4266091791638092744}
@@ -383,6 +387,45 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   myCardImage: {fileID: 8319609792980307993}
   opponentCardImage: {fileID: 4192302460449459468}
+--- !u!114 &3800555676483790943
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 554786974744248438}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 0
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
+--- !u!114 &3420922500227380132
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 554786974744248438}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f29057ff6c92a5445826ed1ed92a15e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardData: {fileID: 11400000, guid: 54cc1a53c54f61342b6d615c29c922a1, type: 2}
+  image: {fileID: 8319609792980307993}
+  topValue: 0
+  bottomValue: 0
+  isRotated: 0
 --- !u!1 &3137382137172561982
 GameObject:
   m_ObjectHideFlags: 0
@@ -401,7 +444,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &5640239476848934639
 RectTransform:
   m_ObjectHideFlags: 0
@@ -607,7 +650,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1367489038571710182
 RectTransform:
   m_ObjectHideFlags: 0

@@ -11,7 +11,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     private Transform originalParent;
     private DominoHand originalHand;
     private DominoBoneYard originalBoneYard;
-
+    public bool isBottomHalf;
     private Vector3 offset;
 
     public RectTransform topHalf;
@@ -194,12 +194,12 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
         if (cell != null)
         {
-            if (cell.transform.Find("Image"))
+            if (isBottomHalf)
             {
                 cell.cellValue = bottomValue;
                 Debug.Log($"Set cell {cellObject.name} bottom value to {bottomValue}");
             }
-            else if (cell.transform.Find("Image_1"))
+            else if (!isBottomHalf)
             {
                 cell.cellValue = topHalf.GetComponent<GetValue>().topValue;
                 Debug.Log($"Set cell {cellObject.name} top value to {topValue}");

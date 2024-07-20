@@ -32,7 +32,7 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
     public bool isTournamentGame = false;
     TurnManager turn;
     public bool InBoneyard;
-    
+
     private const byte TournamentMatchEndEventCode = 1;
 
     private void Awake()
@@ -193,7 +193,6 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
                 {
                     scoreToAdd = totalRemainingValues;
 
-                    
                     if (gameMode == GameModes.AllFives)
                     {
                         scoreToAdd = ((scoreToAdd + 4) / 5) * 5;
@@ -213,7 +212,6 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
 
             if (isTournamentGame)
             {
-               
                 if (CheckForFinalScore())
                 {
                     EndTournamentMatch();
@@ -225,7 +223,6 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
             }
             else
             {
-               
                 if (CheckForFinalScore())
                 {
                     EndMatch();
@@ -242,7 +239,6 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
             Debug.LogError("Game Over called but no player has an empty hand.");
         }
     }
-
 
     bool CheckForFinalScore()
     {
@@ -264,7 +260,6 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
 
     void EndTournamentMatch()
     {
-        // Handle tournament match end logic, e.g., move winners to the next round
         Debug.Log("Tournament match has ended as a player has reached the final score.");
         List<string> winners = new List<string>();
 
@@ -276,23 +271,28 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
             }
         }
 
-        // Raise a custom event to notify other scripts or managers
-        object[] content = new object[] { winners.ToArray() }; // Array of winners
+        object[] content = new object[] { winners.ToArray() };
         PhotonNetwork.RaiseEvent(TournamentMatchEndEventCode, content, new RaiseEventOptions { Receivers = ReceiverGroup.All }, SendOptions.SendReliable);
     }
 
     IEnumerator ResetAndDealNewRound()
     {
-        yield return new WaitForSeconds(2); // Wait for 2 seconds before reshuffling and dealing new round
+        yield return new WaitForSeconds(2);
 
-        // Collect all cards back
+
+        foreach (var domino in allDominoes)
+        {
+            domino.transform.SetParent(spawnGB, false);
+            domino.transform.localPosition = Vector3.zero;
+            domino.transform.localRotation = Quaternion.identity;
+            domino.transform.localScale = Vector3.one;
+        }
         foreach (DominoHand player in players)
         {
-            player.CollectAllCards(allDominoes);
+            player.ClearHand();
         }
-        boneYard.CollectAllCards(allDominoes);
+        boneYard.ClearBoneYard();
 
-        // Reshuffle and redistribute the cards
         DealDominoes();
     }
 

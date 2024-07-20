@@ -254,7 +254,7 @@ public class Main_Menu : MonoBehaviourPunCallbacks
 
         var roomOptions = new RoomOptions
         {
-            MaxPlayers = 2,
+            MaxPlayers = 1,
             IsVisible = false
         };
 
