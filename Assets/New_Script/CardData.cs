@@ -155,7 +155,7 @@ public class CardData : MonoBehaviourPun
         }
         else
         {
-            Debug.LogError($"Player object with ActorNumber {targetPlayer.ActorNumber} not found.");
+            Debug.Log($"Player object with ActorNumber {targetPlayer.ActorNumber} not found.");
             return null;
         }
     }
