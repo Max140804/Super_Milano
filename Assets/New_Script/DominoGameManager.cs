@@ -255,6 +255,7 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
     void EndMatch()
     {
         Debug.Log("Match has ended as a player has reached the final score.");
+        PhotonNetwork.LeaveRoom();
         PhotonNetwork.LoadLevel(0);
     }
 

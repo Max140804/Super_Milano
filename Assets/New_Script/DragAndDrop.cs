@@ -1,5 +1,8 @@
 using Photon.Pun;
 using UnityEngine;
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine.EventSystems;
 
 public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPunObservable
@@ -23,6 +26,9 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     public CardVisibilityManager visibilityManager;
     TurnManager turn;
 
+    private Vector3 networkPosition;
+    private Quaternion networkRotation;
+
     private void Awake()
     {
         rectTransform = GetComponent<RectTransform>();
@@ -39,6 +45,12 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     {
         topValue = cardData.topValue;
         bottomValue = cardData.bottomValue;
+
+        if (!photonView.IsMine)
+        {
+            networkPosition = rectTransform.position;
+            networkRotation = rectTransform.rotation;
+        }
     }
 
     public void OnBeginDrag(PointerEventData eventData)
@@ -230,15 +242,16 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
         foreach (DominoHand player in allPlayers)
         {
-            GameObject[] playerDominoes = player.GetDominoesInHand();
+            List<GameObject> playerDominoes = player.GetDominoesInHand();
 
-            for (int i = 0; i < playerDominoes.Length; i++)
+            for (int i = 0; i < playerDominoes.Count; i++)
             {
                 GameObject domino = playerDominoes[i];
                 domino.transform.localPosition = GetPositionForDomino(player, i);
             }
         }
     }
+
 
     private Vector3 GetPositionForDomino(DominoHand player, int index)
     {
@@ -255,8 +268,17 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         }
         else
         {
-            rectTransform.position = (Vector3)stream.ReceiveNext();
-            rectTransform.rotation = (Quaternion)stream.ReceiveNext();
+            networkPosition = (Vector3)stream.ReceiveNext();
+            networkRotation = (Quaternion)stream.ReceiveNext();
+        }
+    }
+
+    private void Update()
+    {
+        if (!photonView.IsMine)
+        {
+            rectTransform.position = Vector3.Lerp(rectTransform.position, networkPosition, Time.deltaTime * 1);
+            rectTransform.rotation = Quaternion.Lerp(rectTransform.rotation, networkRotation, Time.deltaTime * 1);
         }
     }
 }
