@@ -109,7 +109,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
                 {
                     SnapToCells(cellIndex);
                     SetCellValues(cellObject);
-                    visibilityManager.opponentCardImage.gameObject.SetActive(false);
+                    visibilityManager.opponentCardImage.SetActive(false);
                 }
                 else
                 {

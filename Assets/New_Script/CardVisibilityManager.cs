@@ -5,8 +5,8 @@ using Photon.Realtime;
 
 public class CardVisibilityManager : MonoBehaviourPunCallbacks
 {
-    public Image myCardImage;
-    public Image opponentCardImage;
+    //public GameObject myCardImage;
+    public GameObject opponentCardImage;
 
     PhotonView view;
         
@@ -15,12 +15,15 @@ public class CardVisibilityManager : MonoBehaviourPunCallbacks
     {
         view = GetComponent<PhotonView>();
 
-        if (!view.IsMine)
-            return;
-
-        myCardImage.gameObject.SetActive(true);
-        opponentCardImage.gameObject.SetActive(false);
+        if (view.IsMine)
+        {
+            opponentCardImage.SetActive(false);
+        }
+        else
+        {
+            opponentCardImage.SetActive(true);
+        }
     }
 
-    
+
 }
