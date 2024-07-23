@@ -233,7 +233,7 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
             bid = float.Parse(bidTask.Result.Value.ToString());
         }
 
-        //tournamentComponent.SetData(name, type, players, bid);
+        tournamentComponent.SetData(name, type, players, bid);
     }
     IEnumerator FetchNameAsync(string key)
     {
@@ -315,7 +315,7 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
             // Do something with the retrieved coins, e.g., update UI
         }
 
-        //tournamentComponent.SetData(name, type, players, bid);
+        tournamentComponent.SetData(name, type, players, bid);
     }
     public void Create()
     {
@@ -324,12 +324,15 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
             tournamentplayers = 16;
             menu.players = 16;
         }
+
         StartCoroutine(createtournment());
-        menu.isTournament = true;
-        Instantiate(tournamentPrefab, content.transform);
-        PhotonNetwork.CreateRoom(tournamentname.text, new RoomOptions() { MaxPlayers = tournamentplayers, EmptyRoomTtl = 300000, PlayerTtl = 30000 }, TypedLobby.Default);
+        //menu.isTournament = true;
+        Tournament newTournament = Instantiate(tournamentPrefab, content.transform);
+        newTournament.SetData(tournamentname.text, tournamenttype, tournamentplayers, tournamentbid);
+
         GetTournamentsData();
     }
+
     public IEnumerator createtournment()
     {
         var check = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId)).Child(HelperClass.Encrypt(tournamentname.text, playerId)).GetValueAsync();
@@ -657,57 +660,6 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
             RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All };
             SendOptions sendOptions = new SendOptions { Reliability = true };
             PhotonNetwork.RaiseEvent(TournamentMatchEndEventCode, content, raiseEventOptions, sendOptions);
-        }
-    }
-    public override void OnJoinedRoom()
-    {
-        tourr.SetActive(true);
-        tourrName.text = PhotonNetwork.CurrentRoom.Name;
-    }
-    public override void OnRoomListUpdate(List<RoomInfo> roomList)
-    {
-        UpdateRoomList(roomList);
-        /*if (Time.time >= nextUpdtTime)
-        {
-            UpdateRoomList(roomList);
-            nextUpdtTime = Time.time + timeBtwUpdt;
-        }*/
-
-        
-    }
-    void UpdateRoomList(List<RoomInfo> list)
-    {
-        foreach (Tournament item in tourPrefList)
-        {
-            Destroy(item.gameObject);
-        }
-        tourPrefList.Clear();
-
-        foreach (RoomInfo room in list)
-        {
-            Tournament newTour = Instantiate(tournamentPrefab, content.transform);
-
-            menu.databaseReference.Child("Tournaments").GetValueAsync().ContinueWithOnMainThread(task =>
-            {
-                if (task.IsFaulted)
-                {
-                    Debug.LogError("Error getting data: " + task.Exception);
-                }
-                else if (task.IsCompleted)
-                {
-                    DataSnapshot snapshot = task.Result;
-                        
-                    string tournamentName = snapshot.Key;
-                    int tournamentplayers = int.Parse(snapshot.Child("players").Value.ToString());
-                    float tournamentbid = float.Parse(snapshot.Child("bid").Value.ToString());
-                    string tournamenttype = snapshot.Child("type").Value.ToString();
-
-                    newTour.SetData(tournamentName, tournamenttype, tournamentplayers, tournamentbid); 
-                    tourPrefList.Add(newTour);
-                }
-            });
-
-           
         }
     }
 }

@@ -828,6 +828,7 @@ public class MainMenu : MonoBehaviourPunCallbacks
 
     public void JoinRandomRoom(byte mapCode)
     {
+        
         var customProperties = new ExitGames.Client.Photon.Hashtable
         {
             ["Bid"] = currentbid,
@@ -944,8 +945,6 @@ public class MainMenu : MonoBehaviourPunCallbacks
         PhotonNetwork.CreateRoom(roomName, roomOptions);
 
     }
-
-
     public void CreateAndJoinPrivateRoom(int num)
     {
         StartCoroutine(GetPlayerCoins(playerId));
