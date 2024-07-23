@@ -1712,6 +1712,7 @@ MonoBehaviour:
   finalScore: 50
   gameMode: 0
   isTournamentGame: 0
+  InBoneyard: 0
 --- !u!222 &3636318831234157354
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -5238,7 +5239,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &8302765879591214677
 GameObject:
   m_ObjectHideFlags: 0

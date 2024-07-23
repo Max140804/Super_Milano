@@ -77,7 +77,7 @@ public class DominoHand : MonoBehaviourPun
         totalScore = newScore;
         if (scoreText != null)
         {
-            scoreText.text = totalScore.ToString();
+            scoreText.text = "Score: " + totalScore.ToString();
         }
     }
 
