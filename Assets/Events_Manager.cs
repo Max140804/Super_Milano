@@ -8,12 +8,9 @@ using System;
 using UnityEditor;
 using UnityEngine.UI;
 using System.Security.Cryptography;
-using Photon.Pun;
-using Photon.Realtime;
 using TMPro;
-using ExitGames.Client.Photon;
 
-public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
+public class Events_Manager : MonoBehaviour
 {
     string playerId = "234353423";
 
@@ -50,56 +47,10 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
     public int tournamentplayers;
     public float tournamentbid;
 
-    private const byte TournamentMatchEndEventCode = 1;
     int playersInRoom = 0;
     bool playerAlreadyInTour;
     float timeBtwUpdt = 1.5f;
     float nextUpdtTime;
-
-    private void Awake()
-    {
-    }
-
-    void Start()
-    {
-        PhotonNetwork.AddCallbackTarget(this);
-    }
-
-    void OnDestroy()
-    {
-        PhotonNetwork.RemoveCallbackTarget(this);
-    }
-
-    private void Update()
-    {
-        if (PhotonNetwork.InRoom)
-        {
-            menu.errorpanel.gameObject.SetActive(true);
-            menu.errorpanel_text.text = "You are already in a room, please leave room before creating another.";
-        }
-    }
-
-    public void OnEvent(EventData photonEvent)
-    {
-        byte eventCode = photonEvent.Code;
-
-        if (eventCode == TournamentMatchEndEventCode)
-        {
-            object[] data = (object[])photonEvent.CustomData;
-            string[] winners = (string[])data[0];
-
-            // Handle the winners of the tournament match
-            OnMatchCompleted(new List<string>(winners));
-        }
-    }
-
-    public void OnMatchCompleted(List<string> winners)
-    {
-        // Handle logic for match completion, e.g., move winners to the next round
-        Debug.Log("Match completed with winners: " + string.Join(", ", winners));
-
-
-    }
 
     public void changetype(string typ)
     {
@@ -181,10 +132,8 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
     }
     IEnumerator tour(string key, Tournament tournamentComponent)
     {
-
         // Wait until data is fetched
         yield return StartCoroutine(FetchTournamentDetails(key, tournamentComponent));
-
     }
     IEnumerator FetchTournamentDetails(string key, Tournament tournamentComponent)
     {
@@ -256,7 +205,6 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
     }
     public IEnumerator tourrr(string key, Tournament tournamentComponent)
     {
-
         string name = "Failed To load";
         int players = 2;
         float bid = 0.5f;
@@ -315,351 +263,97 @@ public class Events_Manager : MonoBehaviourPunCallbacks, IOnEventCallback
             // Do something with the retrieved coins, e.g., update UI
         }
 
+        // Assuming 'SetData' is a method that updates the tournament's UI or data
         tournamentComponent.SetData(name, type, players, bid);
     }
     public void Create()
     {
-        if (tournamenttype == "Domino")
+        string key = GenerateUniqueKey();
+        currenttour = key;
+        string encryptedKey = HelperClass.Encrypt(key, playerId);
+
+        var tournamentData = new Dictionary<string, object>
         {
-            tournamentplayers = 16;
-            menu.players = 16;
-        }
+            { HelperClass.Encrypt("name", playerId), HelperClass.Encrypt(tournamentname.text, playerId) },
+            { HelperClass.Encrypt("type", playerId), tournamenttype },
+            { HelperClass.Encrypt("players", playerId), tournamentplayers },
+            { HelperClass.Encrypt("bid", playerId), tournamentbid }
+        };
 
-        StartCoroutine(createtournment());
-        //menu.isTournament = true;
-        Tournament newTournament = Instantiate(tournamentPrefab, content.transform);
-        newTournament.SetData(tournamentname.text, tournamenttype, tournamentplayers, tournamentbid);
-
-        GetTournamentsData();
+        menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId)).Child(encryptedKey).SetValueAsync(tournamentData).ContinueWithOnMainThread(task =>
+        {
+            if (task.IsCompleted)
+            {
+                Debug.Log("Tournament created successfully");
+                Join(key);
+            }
+            else
+            {
+                Debug.Log("Error creating tournament: " + task.Exception);
+            }
+        });
     }
-
-    public IEnumerator createtournment()
+    public void create_tour(string key)
     {
-        var check = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId)).Child(HelperClass.Encrypt(tournamentname.text, playerId)).GetValueAsync();
-        yield return new WaitUntil(() => check.IsCompleted);
+        var tournamentData = new Dictionary<string, object>
+        {
+            { HelperClass.Encrypt("name", playerId), HelperClass.Encrypt(tournamentname.text, playerId) },
+            { HelperClass.Encrypt("type", playerId), tournamenttype },
+            { HelperClass.Encrypt("players", playerId), tournamentplayers },
+            { HelperClass.Encrypt("bid", playerId), tournamentbid }
+        };
 
-        if (check.Exception != null)
+        menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId)).Child(HelperClass.Encrypt(key, playerId)).SetValueAsync(tournamentData).ContinueWithOnMainThread(task =>
         {
-            Debug.LogError($"Failed to get player coins: {check.Exception}");
-        }
-        else if (check.Result.Value == null)
-        {
-            StartCoroutine(Createtour(tournamentname.text, tournamenttype, tournamentplayers, tournamentbid));
-        }
-        else
-        {
-            menu.errorpanel.gameObject.SetActive(true);
-            menu.errorpanel_text.text = "Name is used, Please change tournament name";
-        }
+            if (task.IsCompleted)
+            {
+                // Tournament created successfully
+                Debug.Log("Tournament created successfully");
+
+                // Join the tournament immediately after creating it
+                Join(key);
+            }
+            else
+            {
+                // Handle errors
+                Debug.LogError("Error creating tournament: " + task.Exception);
+            }
+        });
     }
-    public IEnumerator Createtour(string name, string type, int players, float bid)
+    public void Join(string key)
     {
-        var task = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId)).Child(HelperClass.Encrypt(name, playerId)).Child(HelperClass.Encrypt("type", playerId)).SetValueAsync(type);
-        yield return new WaitUntil(() => task.IsCompleted);
+        Debug.Log("Joining tournament with key: " + key);
+        currenttour = key;
 
-        if (task.Exception != null)
-        {
-            Debug.LogError($"Failed to set tournament type: {task.Exception}");
-            yield break; // Stop further execution if error occurs
-        }
-
-        var task2 = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId)).Child(HelperClass.Encrypt(name, playerId)).Child(HelperClass.Encrypt("players", playerId)).SetValueAsync(players);
-        yield return new WaitUntil(() => task2.IsCompleted);
-
-        if (task2.Exception != null)
-        {
-            Debug.LogError($"Failed to set tournament players: {task2.Exception}");
-            yield break; // Stop further execution if error occurs
-        }
-
-        var task3 = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId)).Child(HelperClass.Encrypt(name, playerId)).Child(HelperClass.Encrypt("bid", playerId)).SetValueAsync(bid);
-        yield return new WaitUntil(() => task3.IsCompleted);
-
-        if (task3.Exception != null)
-        {
-            Debug.LogError($"Failed to set tournament bid: {task3.Exception}");
-            yield break; // Stop further execution if error occurs
-        }
-
-        var task4 = menu.databaseReference.Child(HelperClass.Encrypt("players", playerId))
-            .Child(HelperClass.Encrypt(menu.playerId, playerId))
-            .Child(HelperClass.Encrypt("Tournments", playerId))
-            .Child(HelperClass.Encrypt(name, playerId))
-            .SetValueAsync("true");
-        yield return new WaitUntil(() => task4.IsCompleted);
-
-        if (task4.Exception != null)
-        {
-            Debug.LogError($"Failed to add creator to tournament: {task4.Exception}");
-            yield break; // Stop further execution if error occurs
-        }
-
-        playerAlreadyInTour = true;
-        names16UI[0].text = menu.usernamee;
-
-        GetCurrentTournamentsData();
-       
+        // Set the tournament GameObject active
         tourr.SetActive(true);
-    }
-    public void Join(string tournamentname)
-    {
-        //PhotonNetwork.JoinRoom(tournamentname);
 
-        if (playerAlreadyInTour)
-        {
-            tourr.SetActive(true);
-            return;
-        }
+        // Update UI elements with tournament details
+        tourrName.text = HelperClass.Decrypt(key, playerId);
 
-        if (playersInRoom < 16)
-        {
-            names16UI[playersInRoom].text = menu.usernamee;
-            playersInRoom++;
-            StartCoroutine(JoinTournament(tournamentname));
-        }
-        else
-        {
-            Debug.LogWarning("Tournament is full!");
-        }
-    }
-    public IEnumerator JoinTournament(string name)
-    {
-        var checkTask = menu.databaseReference.Child(HelperClass.Encrypt("players", playerId))
-                                             .Child(HelperClass.Encrypt(menu.playerId, playerId))
-                                             .Child(HelperClass.Encrypt("Tournments", playerId))
-                                             .Child(HelperClass.Encrypt(name, playerId))
-                                             .GetValueAsync();
-        yield return new WaitUntil(() => checkTask.IsCompleted);
+        // Fetch player name (or use a placeholder)
+        string playerName = currentusername; // This should be set to the actual player's name
 
-        if (checkTask.Exception != null)
+        // Add the player's name to the names16UI list
+        for (int i = 0; i < names16UI.Count; i++)
         {
-            Debug.LogError($"Failed to get join status: {checkTask.Exception}");
-        }
-        else if (checkTask.Result.Value != null)
-        {
-            Debug.Log("Player has already joined this tournament.");
-            playerAlreadyInTour = true;
-            tourr.SetActive(true);
-        }
-        else
-        {
-            playerAlreadyInTour = false;
-            StartCoroutine(IncrementCurrentPlayers(name));
-            //UpdatePlayerNames(menu.usernamee, 16);
-           // Debug.Log(menu.usernamee + " Joined");
-            yield return StartCoroutine(FetchAndSetPlayerNames(name));
-        }
-    }
-    public IEnumerator FetchAndSetPlayerNames(string name)
-    {
-        string path = $"Tournments/{playerId}/{HelperClass.Encrypt(name, playerId)}/players";
-
-        var playersTask = menu.databaseReference.Child(path).GetValueAsync();
-        yield return new WaitUntil(() => playersTask.IsCompleted);
-
-        if (playersTask.Exception != null)
-        {
-            Debug.LogError($"Failed to fetch player names: {playersTask.Exception}");
-        }
-        else if (playersTask.Result.Value != null)
-        {
-           // int currentStage = 16;
-
-            foreach (DataSnapshot playerSnapshot in playersTask.Result.Children)
+            if (string.IsNullOrEmpty(names16UI[i].text))
             {
-                string playerName = playerSnapshot.Key;
-                //UpdatePlayerNames(playerName, currentStage);
-                Debug.Log(name + " Joined");
-            }
-        }
-        else
-        {
-            Debug.Log("No players found for this tournament.");
-        }
-    }
-    public IEnumerator FetchPlayerNames(string tournamentName, List<string> playerNames)
-    {
-        string path = $"Tournments/{playerId}/{HelperClass.Encrypt(tournamentName, playerId)}";
-
-        var playersTask = menu.databaseReference.Child(path).GetValueAsync();
-        yield return new WaitUntil(() => playersTask.IsCompleted);
-
-        if (playersTask.Exception != null)
-        {
-            Debug.LogError($"Failed to fetch player names: {playersTask.Exception}");
-        }
-        else if (playersTask.Result.Value != null)
-        {
-            foreach (DataSnapshot playerSnapshot in playersTask.Result.Children)
-            {
-                string playerName = playerSnapshot.Key;
-                playerNames.Add(playerName);
-                Debug.Log(playerName);
-            }
-        }
-        else
-        {
-            Debug.Log("No players found for this tournament.");
-        }
-    }
-    public IEnumerator IncrementCurrentPlayers(string name)
-    {
-        var currentPlayersTask = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId))
-                                                     .Child(HelperClass.Encrypt(name, playerId))
-                                                     .Child(HelperClass.Encrypt("currentplayers", playerId))
-                                                     .GetValueAsync();
-        yield return new WaitUntil(() => currentPlayersTask.IsCompleted);
-
-        if (currentPlayersTask.Exception != null)
-        {
-            Debug.LogError($"Failed to get current players count: {currentPlayersTask.Exception}");
-        }
-        else if (currentPlayersTask.Result.Value == null)
-        {
-            Debug.LogError("Current players count not found in database.");
-        }
-        else
-        {
-            int currentPlayers = int.Parse(currentPlayersTask.Result.Value.ToString());
-
-            var totalPlayersTask = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId))
-                                                       .Child(HelperClass.Encrypt(name, playerId))
-                                                       .Child(HelperClass.Encrypt("players", playerId))
-                                                       .GetValueAsync();
-            yield return new WaitUntil(() => totalPlayersTask.IsCompleted);
-
-            if (totalPlayersTask.Exception != null)
-            {
-                Debug.LogError($"Failed to get total players count: {totalPlayersTask.Exception}");
-            }
-            else if (totalPlayersTask.Result.Value == null)
-            {
-                Debug.LogError("Total players count not found in database.");
-            }
-            else
-            {
-                int totalPlayers = int.Parse(totalPlayersTask.Result.Value.ToString());
-
-                if (currentPlayers < totalPlayers)
-                {
-                    var incrementTask = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId))
-                                                             .Child(HelperClass.Encrypt(name, playerId))
-                                                             .Child(HelperClass.Encrypt("currentplayers", playerId))
-                                                             .SetValueAsync(currentPlayers + 1);
-                    yield return new WaitUntil(() => incrementTask.IsCompleted);
-
-                    if (incrementTask.Exception != null)
-                    {
-                        Debug.LogError($"Failed to update current players count: {incrementTask.Exception}");
-                    }
-                    else
-                    {
-                        var joinStatusTask = menu.databaseReference.Child(HelperClass.Encrypt("players", playerId))
-                                                                 .Child(HelperClass.Encrypt(menu.playerId, playerId))
-                                                                 .Child(HelperClass.Encrypt("Tournments", playerId))
-                                                                 .Child(HelperClass.Encrypt(name, playerId))
-                                                                 .SetValueAsync("true");
-                        yield return new WaitUntil(() => joinStatusTask.IsCompleted);
-
-                        if (joinStatusTask.Exception != null)
-                        {
-                            Debug.LogError($"Failed to update join status: {joinStatusTask.Exception}");
-                        }
-                        else
-                        {
-                            Debug.Log("Successfully joined tournament.");
-                            Debug.Log(name);
-                            tourr.SetActive(true);
-                            //UpdatePlayerNames(menu.usernamee, 16);
-                        }
-                    }
-                }
-                else
-                {
-                    menu.errorpanel.gameObject.SetActive(true);
-                    menu.errorpanel_text.text = "The tournament is full.";
-                }
+                names16UI[i].text = playerName;
+                break;
             }
         }
     }
-    public IEnumerator Jointour(string name, int currentplayers)
+
+    public static string GenerateUniqueKey(int length = 8)
     {
-        var task4 = menu.databaseReference.Child(HelperClass.Encrypt("players", playerId)).Child(HelperClass.Encrypt(menu.playerId, playerId)).Child(HelperClass.Encrypt("Tournments", playerId)).Child(HelperClass.Encrypt(name, playerId)).SetValueAsync("true");
-        yield return new WaitUntil(() => task4.IsCompleted);
-
-        if (task4.Exception != null)
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var random = new System.Random();
+        var result = new char[length];
+        for (int i = 0; i < length; i++)
         {
-            Debug.LogError($"Failed to set player coins: {task4.Exception}");
+            result[i] = chars[random.Next(chars.Length)];
         }
-        else
-        {
-            // Success
-            Debug.Log("Successfully set player coins.");
-        }
-
-        var task3 = menu.databaseReference.Child(HelperClass.Encrypt("Tournments", playerId)).Child(HelperClass.Encrypt(name, playerId)).Child(HelperClass.Encrypt("currentplayers", playerId)).SetValueAsync(currentplayers);
-        yield return new WaitUntil(() => task3.IsCompleted);
-
-        if (task3.Exception != null)
-        {
-            Debug.LogError($"Failed to set player coins: {task3.Exception}");
-        }
-        else
-        {
-            // Success
-            Debug.Log("Successfully set player coins.");
-        }
-    }
-    public void Start_Tournemnt(string tournamentname)
-    {
-        StartCoroutine(Start_Tour(tournamentname));
-    }
-    public IEnumerator Start_Tour(string name)
-    {
-        List<string> playersList = new List<string>();
-        string taskKey = HelperClass.Encrypt("Tournments", playerId) + "/" + HelperClass.Encrypt(name, playerId) + "/" + HelperClass.Encrypt("players", playerId);
-
-        var playerstask = menu.databaseReference.Child(taskKey).GetValueAsync();
-        yield return new WaitUntil(() => playerstask.IsCompleted);
-
-        if (playerstask.Exception != null)
-        {
-            Debug.LogError($"Failed to get players: {playerstask.Exception}");
-        }
-        else
-        {
-            foreach (DataSnapshot playerSnapshot in playerstask.Result.Children)
-            {
-                playersList.Add(playerSnapshot.Key);
-            }
-
-            if (playersList.Count % 2 == 0)
-            {
-                // Call method to start matches
-                StartMatches(playersList);
-            }
-            else
-            {
-                menu.errorpanel.gameObject.SetActive(true);
-                menu.errorpanel_text.text = "The number of players is not even";
-            }
-        }
-    }
-    public void StartMatches(List<string> players)
-    {
-        // Pair players and start matches
-        for (int i = 0; i < players.Count; i += 2)
-        {
-            string player1 = players[i];
-            string player2 = players[i + 1];
-
-            // Code to start the match between player1 and player2
-
-            // Broadcast the match start event using Photon
-            object[] content = new object[] { player1, player2 };
-            RaiseEventOptions raiseEventOptions = new RaiseEventOptions { Receivers = ReceiverGroup.All };
-            SendOptions sendOptions = new SendOptions { Reliability = true };
-            PhotonNetwork.RaiseEvent(TournamentMatchEndEventCode, content, raiseEventOptions, sendOptions);
-        }
+        return new string(result);
     }
 }

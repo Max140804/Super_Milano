@@ -97,7 +97,10 @@ public class TurnManager : MonoBehaviourPunCallbacks
 
         if (PhotonNetwork.IsMasterClient)
         {
-            currentPlayerIndex = currentPlayerIndex % totalPlayers;
+            if (currentPlayerIndex >= totalPlayers)
+            {
+                currentPlayerIndex = 0;
+            }
             photonView.RPC("RPC_SetCurrentPlayerIndex", RpcTarget.All, currentPlayerIndex);
         }
 
