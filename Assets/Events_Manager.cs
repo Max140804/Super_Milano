@@ -38,6 +38,8 @@ public class Events_Manager : MonoBehaviour
     private DatabaseReference databaseReference;
     private Dictionary<string, GameObject> instantiatedTournaments = new Dictionary<string, GameObject>();
 
+    int playersInTour = -1;
+
     public void SetTournamentType(string type)
     {
         tournamenttype = type;
@@ -230,7 +232,7 @@ public class Events_Manager : MonoBehaviour
         Debug.Log("Joining tournament with key: " + key);
         currenttour = key;
         tourr.SetActive(true);
-
+        playersInTour++;
         // Decrypt the tournament name for display
         tourrName.text = HelperClass.Decrypt(key, playerId);
 
@@ -258,7 +260,8 @@ public class Events_Manager : MonoBehaviour
             bool nameAdded = false;
             for (int i = 0; i < names16UI.Count; i++)
             {
-                 names16UI[i].text = playerName;
+
+                 names16UI[playersInTour].text = playerName;
                  nameAdded = true;
                  Debug.Log("Added player to the list: " + playerName);
 
@@ -268,7 +271,7 @@ public class Events_Manager : MonoBehaviour
                         if (task.IsCompleted)
                         {
                             Debug.Log("Player added to tournament in the database.");
-                            names16UI[i].text = playerName;
+                            names16UI[playersInTour].text = playerName;
                         }
                         else
                         {
