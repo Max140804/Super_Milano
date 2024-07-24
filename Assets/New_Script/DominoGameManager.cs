@@ -100,18 +100,6 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
                     domino.transform.localPosition = Vector3.zero;
                     domino.transform.localRotation = Quaternion.identity;
                     domino.transform.localScale = Vector3.one;
-
-                    // Set the ownership of the domino to the player
-                    PhotonView photonView = domino.GetComponent<PhotonView>();
-                    if (photonView != null)
-                    {
-                        photonView.TransferOwnership(player.GetComponent<PhotonView>().Owner);
-                    }
-                    else
-                    {
-                        Debug.Log("PhotonView component not found on the domino prefab.");
-                    }
-
                     player.AddToHand(domino);
                     currentDominoIndex++;
                 }

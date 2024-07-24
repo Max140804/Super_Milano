@@ -18,10 +18,10 @@ public class DominoHand : MonoBehaviourPun
         domino.transform.localScale = Vector3.one;
         ToggleAddButton(domino, false);
 
-        PhotonView photonView = domino.GetComponent<PhotonView>();
+        PhotonView photonView = GetComponent<PhotonView>();
         if (photonView != null)
         {
-            photonView.TransferOwnership(GetComponent<PhotonView>().Owner);
+            photonView.TransferOwnership(photonView.Owner);
         }
         else
         {
