@@ -151,7 +151,8 @@ public class Events_Manager : MonoBehaviour
 
         if (instantiatedTournaments.ContainsKey(tournamentName))
         {
-            Destroy(instantiatedTournaments[tournamentName]);
+            // Instead of destroying, we can deactivate the GameObject
+            instantiatedTournaments[tournamentName].SetActive(false);
             instantiatedTournaments.Remove(tournamentName);
         }
     }
@@ -279,11 +280,11 @@ public class Events_Manager : MonoBehaviour
         {
             if (task.IsCompleted)
             {
-                // Remove the instantiated tournament from the dictionary and destroy it
+                // Remove the instantiated tournament from the dictionary and deactivate it
                 string tournamentName = HelperClass.Decrypt(tournamentKey, playerId);
                 if (instantiatedTournaments.ContainsKey(tournamentName))
                 {
-                    Destroy(instantiatedTournaments[tournamentName]);
+                    instantiatedTournaments[tournamentName].SetActive(false);
                     instantiatedTournaments.Remove(tournamentName);
                 }
 
