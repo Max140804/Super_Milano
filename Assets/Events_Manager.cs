@@ -168,6 +168,8 @@ public class Events_Manager : MonoBehaviour
             if (task.IsCompleted)
             {
                 Debug.Log("Tournament created successfully.");
+                InstantiateTournamentPrefab(key, newTournamentData);
+
                 tourr.SetActive(true);
                 tourrName.text = tournamentname.text;
             }
@@ -176,6 +178,24 @@ public class Events_Manager : MonoBehaviour
                 Debug.LogError("Failed to create tournament.");
             }
         });
+    }
+    private void InstantiateTournamentPrefab(string key, TournamentData tournamentData)
+    {
+        // Check if the tournament has already been instantiated
+        string tournamentName = HelperClass.Decrypt(key, playerId);
+        if (!instantiatedTournaments.ContainsKey(tournamentName))
+        {
+            parent.GetComponent<RectTransform>().sizeDelta = new Vector2(parent.GetComponent<RectTransform>().sizeDelta.x, parent.GetComponent<RectTransform>().sizeDelta.y + 350);
+
+            // Instantiate the tournament prefab and set data
+            GameObject tournamentObject = Instantiate(tournamentPref, content.transform);
+            tournamentObject.transform.parent = content.transform;
+            Tournament tournamentComponent = tournamentObject.GetComponent<Tournament>();
+            tournamentComponent.SetData(tournamentName, tournamentData.type, tournamentData.players, tournamentData.bid);
+
+            // Add the instantiated tournament to the dictionary
+            instantiatedTournaments[tournamentName] = tournamentObject;
+        }
     }
 
     public void Join(string key)
