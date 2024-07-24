@@ -17,6 +17,16 @@ public class DominoHand : MonoBehaviourPun
         domino.transform.localRotation = Quaternion.identity;
         domino.transform.localScale = Vector3.one;
         ToggleAddButton(domino, false);
+
+        PhotonView photonView = domino.GetComponent<PhotonView>();
+        if (photonView != null)
+        {
+            photonView.TransferOwnership(GetComponent<PhotonView>().Owner);
+        }
+        else
+        {
+            Debug.Log("PhotonView component not found on the domino prefab.");
+        }
     }
 
     public bool RemoveFromHand(GameObject domino)

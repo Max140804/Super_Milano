@@ -87,12 +87,11 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
         Shuffle(allDominoes);
 
         int tilesPerPlayer = GetTilesPerPlayer();
-
         int currentDominoIndex = 0;
 
-        for (int i = 0; i < tilesPerPlayer; i++)
+        foreach (DominoHand player in players)
         {
-            foreach (DominoHand player in players)
+            for (int i = 0; i < tilesPerPlayer; i++)
             {
                 if (currentDominoIndex < allDominoes.Count)
                 {
@@ -101,8 +100,19 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
                     domino.transform.localPosition = Vector3.zero;
                     domino.transform.localRotation = Quaternion.identity;
                     domino.transform.localScale = Vector3.one;
+
+                    // Set the ownership of the domino to the player
+                    PhotonView photonView = domino.GetComponent<PhotonView>();
+                    if (photonView != null)
+                    {
+                        photonView.TransferOwnership(player.GetComponent<PhotonView>().Owner);
+                    }
+                    else
+                    {
+                        Debug.Log("PhotonView component not found on the domino prefab.");
+                    }
+
                     player.AddToHand(domino);
-                    InBoneyard = false;
                     currentDominoIndex++;
                 }
             }
@@ -116,10 +126,17 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
             domino.transform.localPosition = Vector3.zero;
             domino.transform.localRotation = Quaternion.identity;
             domino.transform.localScale = Vector3.one;
+
+            if (domino.GetComponent<PhotonView>() != null)
+            {
+                // Optionally, you can also set ownership for the boneYard if needed
+                // but typically the bone yard doesn't need this.
+            }
+
             boneYard.AddToBoneYard(domino);
-            InBoneyard = true;
         }
     }
+
 
     int GetTilesPerPlayer()
     {
