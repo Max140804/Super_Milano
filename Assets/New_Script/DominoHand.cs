@@ -21,7 +21,7 @@ public class DominoHand : MonoBehaviourPun
         PhotonView photonView = GetComponent<PhotonView>();
         if (photonView != null)
         {
-            photonView.TransferOwnership(photonView.Owner);
+            photonView.TransferOwnership(PhotonNetwork.LocalPlayer);
         }
         else
         {

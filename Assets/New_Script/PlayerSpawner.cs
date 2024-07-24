@@ -53,7 +53,13 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
 
             GameObject playerInstance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPosition, spawnRotation);
             playerInstance.transform.parent = transform;
+
+            // Set player name on the player instance
             playerInstance.GetComponent<DominoPlayerData>().SetPlayerName(player.NickName);
+
+            // Set ownership
+            PhotonView photonView = playerInstance.GetComponent<PhotonView>();
+            photonView.TransferOwnership(player);
 
             // Track the spawned player
             spawnedPlayers[player.ActorNumber] = playerInstance;
