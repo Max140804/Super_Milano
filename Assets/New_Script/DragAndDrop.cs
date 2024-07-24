@@ -271,7 +271,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         }
     }
 
-    private void Update()
+    /*private void Update()
     {
         if (!photonView.IsMine)
         {
@@ -279,5 +279,5 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
             rectTransform.rotation = Quaternion.Lerp(rectTransform.rotation, networkRotation, Time.deltaTime * 10);
         }
         isMine = photonView.IsMine;
-    }
+    }*/
 }
