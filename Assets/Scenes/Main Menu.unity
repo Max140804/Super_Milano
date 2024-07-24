@@ -11449,7 +11449,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &359508376
 RectTransform:
   m_ObjectHideFlags: 0
@@ -31843,6 +31843,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tournamentPrefab: {fileID: 7812627131226639458, guid: 33614634ccbc2754b8a7739404e318c0,
     type: 3}
+  tournamentPref: {fileID: 2214519192029508679, guid: 33614634ccbc2754b8a7739404e318c0,
+    type: 3}
   parent: {fileID: 1969908051}
   CurrentTourParent: {fileID: 2143387241}
   content: {fileID: 1969908051}
@@ -38062,7 +38064,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1009134756}
         m_TargetAssemblyTypeName: Events_Manager, Assembly-CSharp
-        m_MethodName: Create
+        m_MethodName: CreateTournament
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -45912,10 +45914,10 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: MainMenu, Assembly-CSharp
-        m_MethodName: CreateAndJoinPrivateRoom
-        m_Mode: 3
+      - m_Target: {fileID: 1009134756}
+        m_TargetAssemblyTypeName: Events_Manager, Assembly-CSharp
+        m_MethodName: CreateTournament
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -45944,7 +45946,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 8bec2a4284184344db25a431344dc809, type: 3}
+  m_Sprite: {fileID: 21300000, guid: bd952e71b0104b74a81681365ca04e3e, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -48095,7 +48097,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1615495712
 RectTransform:
   m_ObjectHideFlags: 0
