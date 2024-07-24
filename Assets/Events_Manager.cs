@@ -331,8 +331,7 @@ public class Events_Manager : MonoBehaviour
                 TournamentData tournamentData = JsonUtility.FromJson<TournamentData>(tournamentSnapshot.GetRawJsonValue());
                 long createdAt = tournamentData.createdAt;
 
-                // Check if 2 days (172800 seconds) have passed
-                if (currentTime - createdAt > 172800)
+                if (currentTime - createdAt > 180)
                 {
                     string tournamentKey = tournamentSnapshot.Key;
                     DeleteTournament(tournamentKey);
