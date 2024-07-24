@@ -258,13 +258,9 @@ public class Events_Manager : MonoBehaviour
             bool nameAdded = false;
             for (int i = 0; i < names16UI.Count; i++)
             {
-                if (string.IsNullOrEmpty(names16UI[i].text))
-                {
                     names16UI[i].text = playerName;
                     nameAdded = true;
-                    Debug.Log("Added player to the list: " + playerName);
-                    break;
-                }
+                Debug.Log("Added player to the list: " + playerName);
             }
 
             if (!nameAdded)
