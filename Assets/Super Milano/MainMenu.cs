@@ -1259,7 +1259,7 @@ public class MainMenu : MonoBehaviourPunCallbacks
     [PunRPC]
     public void LoadScene(int sceneName)
     {
-        SceneManager.LoadScene(sceneName);
+        SceneManager.LoadScene(gameNumber);
     }
 
     public void SetParticipants()
