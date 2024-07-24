@@ -4,6 +4,8 @@ using UnityEngine;
 using System.Security.Cryptography;
 using System;
 using UnityEngine.UI;
+using Photon.Pun;
+using Photon;
 using TMPro;
 using Firebase.Database;
 using Firebase;
@@ -137,7 +139,7 @@ public class Events_Manager : MonoBehaviour
                         GameObject tournamentObject = Instantiate(tournamentPref, content.transform);
                         tournamentObject.transform.parent = content.transform;
                         Tournament tournamentComponent = tournamentObject.GetComponent<Tournament>();
-                        tournamentComponent.SetData(tournamentData.name, tournamentData.type, tournamentData.players, tournamentData.bid);
+                        tournamentComponent.SetData(tournamentname.text, tournamentData.type, tournamentData.players, tournamentData.bid);
 
                         // Add the instantiated tournament to the dictionary
                         instantiatedTournaments[tournamentName] = tournamentObject;
@@ -184,12 +186,10 @@ public class Events_Manager : MonoBehaviour
                 DataSnapshot snapshot = task.Result;
                 TournamentData tournamentData = JsonUtility.FromJson<TournamentData>(snapshot.GetRawJsonValue());
 
-                // Instantiate the tournament prefab and set data
                 GameObject tournamentObject = Instantiate(tournamentPref, content.transform);
                 Tournament tournamentComponent = tournamentObject.GetComponent<Tournament>();
                 tournamentComponent.SetData(tournamentData.name, tournamentData.type, tournamentData.players, tournamentData.bid);
 
-                // Add the instantiated tournament to the dictionary
                 instantiatedTournaments[key] = tournamentObject;
 
                 Join(key);
@@ -210,17 +210,33 @@ public class Events_Manager : MonoBehaviour
 
         tourrName.text = HelperClass.Decrypt(key, playerId);
 
-        string playerName = currentusername;
+        string playerName = PhotonNetwork.NickName;
 
-        for (int i = 0; i < names16UI.Count; i++)
+        // Check if the player is already in the list
+        bool playerAlreadyJoined = false;
+        foreach (Text nameText in names16UI)
         {
-            if (string.IsNullOrEmpty(names16UI[i].text))
+            if (nameText.text == playerName)
             {
-                names16UI[i].text = playerName;
+                playerAlreadyJoined = true;
                 break;
             }
         }
+
+        // If the player is not already in the list, add them
+        if (!playerAlreadyJoined)
+        {
+            for (int i = 0; i < names16UI.Count; i++)
+            {
+                if (string.IsNullOrEmpty(names16UI[i].text))
+                {
+                    names16UI[i].text = playerName;
+                    break;
+                }
+            }
+        }
     }
+
 
     public void DeleteTournament(string tournamentKey)
     {
