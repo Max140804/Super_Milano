@@ -1,7 +1,5 @@
 using Photon.Pun;
 using UnityEngine;
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.EventSystems;
 
@@ -252,7 +250,6 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         }
     }
 
-
     private Vector3 GetPositionForDomino(DominoHand player, int index)
     {
         float spacing = 1.5f;
@@ -277,8 +274,8 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     {
         if (!photonView.IsMine)
         {
-            rectTransform.position = Vector3.Lerp(rectTransform.position, networkPosition, Time.deltaTime * 1);
-            rectTransform.rotation = Quaternion.Lerp(rectTransform.rotation, networkRotation, Time.deltaTime * 1);
+            rectTransform.position = Vector3.Lerp(rectTransform.position, networkPosition, Time.deltaTime * 10);
+            rectTransform.rotation = Quaternion.Lerp(rectTransform.rotation, networkRotation, Time.deltaTime * 10);
         }
     }
 }
