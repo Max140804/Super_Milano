@@ -49,6 +49,16 @@ public class Events_Manager : MonoBehaviour
     private DatabaseReference databaseReference;
     private Dictionary<string, GameObject> instantiatedTournaments = new Dictionary<string, GameObject>();
 
+    public void SetTournamentType(string type)
+    {
+        tournamenttype = type;
+    }
+
+    public void SetTournamentBid(float bid)
+    {
+        tournamentbid = bid;
+    }
+
     private void Start()
     {
         FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
@@ -90,7 +100,7 @@ public class Events_Manager : MonoBehaviour
                 GameObject tournamentObject = Instantiate(tournamentPref, content.transform);
                 tournamentObject.transform.parent = content.transform;
                 Tournament tournamentComponent = tournamentObject.GetComponent<Tournament>();
-                tournamentComponent.SetData(tournamentData.name, tournamentData.type, tournamentData.players, tournamentData.bid);
+                tournamentComponent.SetData(tournamentname.text, tournamentData.type, tournamentData.players, tournamentData.bid);
 
                 // Add the instantiated tournament to the dictionary
                 instantiatedTournaments[tournamentName] = tournamentObject;
@@ -122,18 +132,25 @@ public class Events_Manager : MonoBehaviour
         if (instantiatedTournaments.ContainsKey(tournamentName))
         {
             Tournament tournamentComponent = instantiatedTournaments[tournamentName].GetComponent<Tournament>();
-            tournamentComponent.SetData(tournamentData.name, tournamentData.type, tournamentData.players, tournamentData.bid);
+            tournamentComponent.SetData(tournamentname.text, tournamentData.type, tournamentData.players, tournamentData.bid);
         }
     }
 
     public void CreateTournament()
     {
+        if(tournamentname.text.Length <= 0)
+        {
+            menu.errorpanel.SetActive(true);
+            menu.errorpanel_text.text = "Invalid TournamentName";
+            return;
+        }
+
         string key = HelperClass.Encrypt(tournamentname.text, playerId);
         var newTournamentData = new TournamentData
         {
             name = HelperClass.Encrypt(tournamentname.text, playerId),
             type = tournamenttype,
-            players = tournamentplayers,
+            players = 16,
             bid = tournamentbid,
             createdAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
         };
