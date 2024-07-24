@@ -38,6 +38,16 @@ public class Events_Manager : MonoBehaviour
     private DatabaseReference databaseReference;
     private Dictionary<string, GameObject> instantiatedTournaments = new Dictionary<string, GameObject>();
 
+    public void SetTournamentType(string type)
+    {
+        tournamenttype = type;
+    }
+
+    public void SetTournamentBid(float bid)
+    {
+        tournamentbid = bid;
+    }
+
     private void Start()
     {
         FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
@@ -82,10 +92,17 @@ public class Events_Manager : MonoBehaviour
                     GameObject tournamentObject = Instantiate(tournamentPref, content.transform);
                     tournamentObject.transform.parent = content.transform;
                     Tournament tournamentComponent = tournamentObject.GetComponent<Tournament>();
-                    tournamentComponent.SetData(tournamentName, tournamentData.type, tournamentData.players, tournamentData.bid);
+                    if (tournamentComponent != null)
+                    {
+                        tournamentComponent.SetData(tournamentName, tournamentData.type, tournamentData.players, tournamentData.bid);
 
-                    // Add the instantiated tournament to the dictionary
-                    instantiatedTournaments[tournamentName] = tournamentObject;
+                        // Add the instantiated tournament to the dictionary
+                        instantiatedTournaments[tournamentName] = tournamentObject;
+                    }
+                    else
+                    {
+                        Debug.LogError("Tournament component not found on instantiated prefab.");
+                    }
                 }
             }
         });
@@ -107,19 +124,15 @@ public class Events_Manager : MonoBehaviour
             TournamentData tournamentData = JsonUtility.FromJson<TournamentData>(snapshot.GetRawJsonValue());
             string tournamentName = HelperClass.Decrypt(tournamentKey, playerId);
 
+            Debug.Log($"Tournament added: {tournamentName}");
+
             // Check if the tournament has already been instantiated
             if (!instantiatedTournaments.ContainsKey(tournamentName))
             {
                 parent.GetComponent<RectTransform>().sizeDelta = new Vector2(parent.GetComponent<RectTransform>().sizeDelta.x, parent.GetComponent<RectTransform>().sizeDelta.y + 350);
 
                 // Instantiate the tournament prefab and set data
-                GameObject tournamentObject = Instantiate(tournamentPref, content.transform);
-                tournamentObject.transform.parent = content.transform;
-                Tournament tournamentComponent = tournamentObject.GetComponent<Tournament>();
-                tournamentComponent.SetData(tournamentName, tournamentData.type, tournamentData.players, tournamentData.bid);
-
-                // Add the instantiated tournament to the dictionary
-                instantiatedTournaments[tournamentName] = tournamentObject;
+                InstantiateTournamentPrefab(tournamentKey, tournamentData);
             }
         }
     }
@@ -179,6 +192,7 @@ public class Events_Manager : MonoBehaviour
             }
         });
     }
+
     private void InstantiateTournamentPrefab(string key, TournamentData tournamentData)
     {
         // Check if the tournament has already been instantiated
@@ -191,10 +205,22 @@ public class Events_Manager : MonoBehaviour
             GameObject tournamentObject = Instantiate(tournamentPref, content.transform);
             tournamentObject.transform.parent = content.transform;
             Tournament tournamentComponent = tournamentObject.GetComponent<Tournament>();
-            tournamentComponent.SetData(tournamentName, tournamentData.type, tournamentData.players, tournamentData.bid);
+            if (tournamentComponent != null)
+            {
+                tournamentComponent.SetData(tournamentName, tournamentData.type, tournamentData.players, tournamentData.bid);
 
-            // Add the instantiated tournament to the dictionary
-            instantiatedTournaments[tournamentName] = tournamentObject;
+                // Add the instantiated tournament to the dictionary
+                instantiatedTournaments[tournamentName] = tournamentObject;
+                Debug.Log($"Tournament instantiated: {tournamentName}");
+            }
+            else
+            {
+                Debug.LogError("Tournament component not found on instantiated prefab.");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Tournament already instantiated: " + tournamentName);
         }
     }
 
