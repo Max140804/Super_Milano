@@ -5,12 +5,18 @@ using Photon.Realtime;
 
 public class PlayerSpawner : MonoBehaviourPunCallbacks
 {
-    public GameObject playerPrefab; // The player prefab to be instantiated
-    public Transform spawnPoint; // Single spawn point for players
+    public GameObject playerPrefab;
+    public Transform spawnPoint;
 
     private Dictionary<int, GameObject> spawnedPlayers = new Dictionary<int, GameObject>();
 
     private void Awake()
+    {
+        GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
+        instance.transform.parent = spawnPoint;
+    }
+
+    /*private void Awake()
     {
         // Spawn all players currently in the room
         SpawnAllPlayers();
@@ -68,5 +74,5 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
         {
             Debug.LogError("Player prefab or spawn point is not assigned.");
         }
-    }
+    }*/
 }

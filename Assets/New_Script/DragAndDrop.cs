@@ -37,7 +37,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         turn = FindObjectOfType<TurnManager>();
         cardData = GetComponent<CardData>();
         visibilityManager = GetComponent<CardVisibilityManager>();
-        photonView = GetComponent<PhotonView>();
+        photonView = GetComponentInParent<PhotonView>();
     }
 
     private void Start()
@@ -49,6 +49,14 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         {
             networkPosition = rectTransform.position;
             networkRotation = rectTransform.rotation;
+        }
+    }
+
+    private void Update()
+    {
+        if(photonView == null)
+        {
+            return;
         }
     }
 
