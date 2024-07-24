@@ -5,9 +5,11 @@ using System.Security.Cryptography;
 using System;
 using UnityEngine.UI;
 using TMPro;
-using Photon.Pun;
+using Firebase.Database;
+using Firebase;
+using Firebase.Extensions;
 
-public class Events_Manager : MonoBehaviourPunCallbacks
+public class Events_Manager : MonoBehaviour
 {
     string playerId = "234353423";
 
@@ -44,16 +46,28 @@ public class Events_Manager : MonoBehaviourPunCallbacks
     public int tournamentplayers;
     public float tournamentbid;
 
-    private Dictionary<string, TournamentData> tournamentDataDictionary = new Dictionary<string, TournamentData>();
+    private DatabaseReference databaseReference;
+    private Dictionary<string, GameObject> instantiatedTournaments = new Dictionary<string, GameObject>();
+
+    private void Start()
+    {
+        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
+        {
+            FirebaseApp app = FirebaseApp.DefaultInstance;
+            databaseReference = FirebaseDatabase.DefaultInstance.RootReference;
+        });
+    }
 
     public void changetype(string typ)
     {
         tournamenttype = typ;
     }
+
     public void changeplayers(int pla)
     {
         tournamentplayers = pla;
     }
+
     public void changebid(int bi)
     {
         if (bi == 42)
@@ -75,11 +89,21 @@ public class Events_Manager : MonoBehaviourPunCallbacks
             Destroy(child.gameObject);
         }
 
-        foreach (var tournamentEntry in tournamentDataDictionary)
+        databaseReference.Child("tournaments").GetValueAsync().ContinueWithOnMainThread(task =>
         {
-            Debug.Log(tournamentEntry.Key);
-            CurrentTourParent.GetComponent<RectTransform>().sizeDelta = new Vector2(CurrentTourParent.GetComponent<RectTransform>().sizeDelta.x, CurrentTourParent.GetComponent<RectTransform>().sizeDelta.y + 350);
-        }
+            if (task.IsFaulted)
+            {
+                Debug.LogError("Failed to retrieve data from database.");
+            }
+            else if (task.IsCompleted)
+            {
+                DataSnapshot snapshot = task.Result;
+                foreach (DataSnapshot tournamentSnapshot in snapshot.Children)
+                {
+                    CurrentTourParent.GetComponent<RectTransform>().sizeDelta = new Vector2(CurrentTourParent.GetComponent<RectTransform>().sizeDelta.x, CurrentTourParent.GetComponent<RectTransform>().sizeDelta.y + 350);
+                }
+            }
+        });
     }
 
     public void GetTournamentsData()
@@ -90,20 +114,40 @@ public class Events_Manager : MonoBehaviourPunCallbacks
             Destroy(child.gameObject);
         }
 
-        foreach (var tournamentEntry in tournamentDataDictionary)
+        databaseReference.Child("tournaments").GetValueAsync().ContinueWithOnMainThread(task =>
         {
-            parent.GetComponent<RectTransform>().sizeDelta = new Vector2(parent.GetComponent<RectTransform>().sizeDelta.x, parent.GetComponent<RectTransform>().sizeDelta.y + 350);
+            if (task.IsFaulted)
+            {
+                Debug.LogError("Failed to retrieve data from database.");
+            }
+            else if (task.IsCompleted)
+            {
+                DataSnapshot snapshot = task.Result;
+                foreach (DataSnapshot tournamentSnapshot in snapshot.Children)
+                {
+                    string tournamentName = tournamentSnapshot.Key;
+                    TournamentData tournamentData = JsonUtility.FromJson<TournamentData>(tournamentSnapshot.GetRawJsonValue());
 
-            string tournamentName = tournamentEntry.Key;
-            var tournamentData = tournamentEntry.Value;
+                    // Check if the tournament has already been instantiated
+                    if (!instantiatedTournaments.ContainsKey(tournamentName))
+                    {
+                        parent.GetComponent<RectTransform>().sizeDelta = new Vector2(parent.GetComponent<RectTransform>().sizeDelta.x, parent.GetComponent<RectTransform>().sizeDelta.y + 350);
 
-            // Instantiate the tournament prefab and set data
-            Tournament tournamentComponent = PhotonNetwork.Instantiate(tournamentPref.name, content.transform.position, Quaternion.identity).GetComponent<Tournament>();
-            tournamentComponent.SetData(tournamentData.name, tournamentData.type, tournamentData.players, tournamentData.bid);
-        }
+                        // Instantiate the tournament prefab and set data
+                        GameObject tournamentObject = Instantiate(tournamentPref, content.transform);
+                        tournamentObject.transform.parent = content.transform;
+                        Tournament tournamentComponent = tournamentObject.GetComponent<Tournament>();
+                        tournamentComponent.SetData(tournamentData.name, tournamentData.type, tournamentData.players, tournamentData.bid);
 
-        Canvas.ForceUpdateCanvases();
-        LayoutRebuilder.ForceRebuildLayoutImmediate(content.GetComponent<RectTransform>());
+                        // Add the instantiated tournament to the dictionary
+                        instantiatedTournaments[tournamentName] = tournamentObject;
+                    }
+                }
+
+                Canvas.ForceUpdateCanvases();
+                LayoutRebuilder.ForceRebuildLayoutImmediate(content.GetComponent<RectTransform>());
+            }
+        });
     }
 
     public void CreateTournament()
@@ -116,27 +160,52 @@ public class Events_Manager : MonoBehaviourPunCallbacks
             players = tournamentplayers,
             bid = tournamentbid
         };
-        tournamentDataDictionary[key] = newTournamentData;
-        PhotonNetwork.JoinRoom(key);
-        Create(key);
+        string json = JsonUtility.ToJson(newTournamentData);
+
+        databaseReference.Child("tournaments").Child(key).SetRawJsonValueAsync(json).ContinueWithOnMainThread(task =>
+        {
+            if (task.IsCompleted)
+            {
+                Create(key);
+            }
+            else
+            {
+                Debug.LogError("Failed to create tournament.");
+            }
+        });
     }
 
     public void Create(string key)
     {
-        var tournamentComponent = PhotonNetwork.Instantiate(tournamentPref.name, content.transform.position, Quaternion.identity).GetComponent<Tournament>();
-        var tournamentData = tournamentDataDictionary[key];
-        tournamentComponent.SetData(tournamentData.name, tournamentData.type, tournamentData.players, tournamentData.bid);
-        Join(key);
-        PhotonNetwork.Instantiate(tournamentPref.name, content.transform.position, Quaternion.identity);
-        tourr.SetActive(true);
-       
+        databaseReference.Child("tournaments").Child(key).GetValueAsync().ContinueWithOnMainThread(task =>
+        {
+            if (task.IsCompleted)
+            {
+                DataSnapshot snapshot = task.Result;
+                TournamentData tournamentData = JsonUtility.FromJson<TournamentData>(snapshot.GetRawJsonValue());
+
+                // Instantiate the tournament prefab and set data
+                GameObject tournamentObject = Instantiate(tournamentPref, content.transform);
+                Tournament tournamentComponent = tournamentObject.GetComponent<Tournament>();
+                tournamentComponent.SetData(tournamentData.name, tournamentData.type, tournamentData.players, tournamentData.bid);
+
+                // Add the instantiated tournament to the dictionary
+                instantiatedTournaments[key] = tournamentObject;
+
+                Join(key);
+                tourr.SetActive(true);
+            }
+            else
+            {
+                Debug.LogError("Failed to retrieve tournament data.");
+            }
+        });
     }
 
     public void Join(string key)
     {
         Debug.Log("Joining tournament with key: " + key);
         currenttour = key;
-        PhotonNetwork.JoinRoom(key);
         tourr.SetActive(true);
 
         tourrName.text = HelperClass.Decrypt(key, playerId);
@@ -155,14 +224,24 @@ public class Events_Manager : MonoBehaviourPunCallbacks
 
     public void DeleteTournament(string tournamentKey)
     {
-        if (tournamentDataDictionary.Remove(tournamentKey))
+        databaseReference.Child("tournaments").Child(tournamentKey).RemoveValueAsync().ContinueWithOnMainThread(task =>
         {
-            Debug.Log("Tournament deleted successfully");
-        }
-        else
-        {
-            Debug.LogError("Error deleting tournament");
-        }
+            if (task.IsCompleted)
+            {
+                // Remove the instantiated tournament from the dictionary and destroy it
+                if (instantiatedTournaments.ContainsKey(tournamentKey))
+                {
+                    Destroy(instantiatedTournaments[tournamentKey]);
+                    instantiatedTournaments.Remove(tournamentKey);
+                }
+
+                Debug.Log("Tournament deleted successfully");
+            }
+            else
+            {
+                Debug.LogError("Error deleting tournament");
+            }
+        });
     }
 }
 
