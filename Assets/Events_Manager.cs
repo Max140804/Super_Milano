@@ -1,12 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Security.Cryptography;
 using System;
 using UnityEngine.UI;
-using Photon.Pun;
-using Photon;
 using TMPro;
+using Photon.Pun;
 using Firebase.Database;
 using Firebase;
 using Firebase.Extensions;
@@ -57,99 +55,75 @@ public class Events_Manager : MonoBehaviour
         {
             FirebaseApp app = FirebaseApp.DefaultInstance;
             databaseReference = FirebaseDatabase.DefaultInstance.RootReference;
+            ListenForTournamentChanges();
+            InvokeRepeating("CheckForExpiredTournaments", 0, 3600); // Check every hour
         });
     }
 
-    public void changetype(string typ)
+    private void ListenForTournamentChanges()
     {
-        tournamenttype = typ;
+        databaseReference.Child("tournaments").ChildAdded += HandleTournamentAdded;
+        databaseReference.Child("tournaments").ChildRemoved += HandleTournamentRemoved;
     }
 
-    public void changeplayers(int pla)
+    private void HandleTournamentAdded(object sender, ChildChangedEventArgs e)
     {
-        tournamentplayers = pla;
+        if (e.DatabaseError != null)
+        {
+            Debug.LogError(e.DatabaseError.Message);
+            return;
+        }
+
+        DataSnapshot snapshot = e.Snapshot;
+        string tournamentName = snapshot.Key;
+
+        if (snapshot.Exists)
+        {
+            TournamentData tournamentData = JsonUtility.FromJson<TournamentData>(snapshot.GetRawJsonValue());
+
+            // Check if the tournament has already been instantiated
+            if (!instantiatedTournaments.ContainsKey(tournamentName))
+            {
+                parent.GetComponent<RectTransform>().sizeDelta = new Vector2(parent.GetComponent<RectTransform>().sizeDelta.x, parent.GetComponent<RectTransform>().sizeDelta.y + 350);
+
+                // Instantiate the tournament prefab and set data
+                GameObject tournamentObject = Instantiate(tournamentPref, content.transform);
+                tournamentObject.transform.parent = content.transform;
+                Tournament tournamentComponent = tournamentObject.GetComponent<Tournament>();
+                tournamentComponent.SetData(tournamentData.name, tournamentData.type, tournamentData.players, tournamentData.bid);
+
+                // Add the instantiated tournament to the dictionary
+                instantiatedTournaments[tournamentName] = tournamentObject;
+            }
+        }
     }
 
-    public void changebid(int bi)
+    private void HandleTournamentRemoved(object sender, ChildChangedEventArgs e)
     {
-        if (bi == 42)
+        if (e.DatabaseError != null)
         {
-            tournamentbid = 0.05f;
+            Debug.LogError(e.DatabaseError.Message);
+            return;
         }
-        else
+
+        DataSnapshot snapshot = e.Snapshot;
+        string tournamentName = snapshot.Key;
+
+        if (instantiatedTournaments.ContainsKey(tournamentName))
         {
-            tournamentbid = bi;
+            Destroy(instantiatedTournaments[tournamentName]);
+            instantiatedTournaments.Remove(tournamentName);
         }
     }
 
-    public void GetCurrentTournamentsData()
+    private void HandleTournamentUpdate(string tournamentName, TournamentData tournamentData)
     {
-        CurrentTourParent.GetComponent<RectTransform>().sizeDelta = new Vector2(CurrentTourParent.GetComponent<RectTransform>().sizeDelta.x, 0);
-
-        foreach (Transform child in CurrentTourParent.transform)
+        // Update the existing tournament
+        if (instantiatedTournaments.ContainsKey(tournamentName))
         {
-            Destroy(child.gameObject);
+            Tournament tournamentComponent = instantiatedTournaments[tournamentName].GetComponent<Tournament>();
+            tournamentComponent.SetData(tournamentData.name, tournamentData.type, tournamentData.players, tournamentData.bid);
         }
-
-        databaseReference.Child("tournaments").GetValueAsync().ContinueWithOnMainThread(task =>
-        {
-            if (task.IsFaulted)
-            {
-                Debug.LogError("Failed to retrieve data from database.");
-            }
-            else if (task.IsCompleted)
-            {
-                DataSnapshot snapshot = task.Result;
-                foreach (DataSnapshot tournamentSnapshot in snapshot.Children)
-                {
-                    CurrentTourParent.GetComponent<RectTransform>().sizeDelta = new Vector2(CurrentTourParent.GetComponent<RectTransform>().sizeDelta.x, CurrentTourParent.GetComponent<RectTransform>().sizeDelta.y + 350);
-                }
-            }
-        });
-    }
-
-    public void GetTournamentsData()
-    {
-        parent.GetComponent<RectTransform>().sizeDelta = new Vector2(parent.GetComponent<RectTransform>().sizeDelta.x, 0);
-        foreach (Transform child in parent.transform)
-        {
-            Destroy(child.gameObject);
-        }
-
-        databaseReference.Child("tournaments").GetValueAsync().ContinueWithOnMainThread(task =>
-        {
-            if (task.IsFaulted)
-            {
-                Debug.LogError("Failed to retrieve data from database.");
-            }
-            else if (task.IsCompleted)
-            {
-                DataSnapshot snapshot = task.Result;
-                foreach (DataSnapshot tournamentSnapshot in snapshot.Children)
-                {
-                    string tournamentName = tournamentSnapshot.Key;
-                    TournamentData tournamentData = JsonUtility.FromJson<TournamentData>(tournamentSnapshot.GetRawJsonValue());
-
-                    // Check if the tournament has already been instantiated
-                    if (!instantiatedTournaments.ContainsKey(tournamentName))
-                    {
-                        parent.GetComponent<RectTransform>().sizeDelta = new Vector2(parent.GetComponent<RectTransform>().sizeDelta.x, parent.GetComponent<RectTransform>().sizeDelta.y + 350);
-
-                        // Instantiate the tournament prefab and set data
-                        GameObject tournamentObject = Instantiate(tournamentPref, content.transform);
-                        tournamentObject.transform.parent = content.transform;
-                        Tournament tournamentComponent = tournamentObject.GetComponent<Tournament>();
-                        tournamentComponent.SetData(tournamentname.text, tournamentData.type, tournamentData.players, tournamentData.bid);
-
-                        // Add the instantiated tournament to the dictionary
-                        instantiatedTournaments[tournamentName] = tournamentObject;
-                    }
-                }
-
-                Canvas.ForceUpdateCanvases();
-                LayoutRebuilder.ForceRebuildLayoutImmediate(content.GetComponent<RectTransform>());
-            }
-        });
     }
 
     public void CreateTournament()
@@ -160,7 +134,8 @@ public class Events_Manager : MonoBehaviour
             name = HelperClass.Encrypt(tournamentname.text, playerId),
             type = tournamenttype,
             players = tournamentplayers,
-            bid = tournamentbid
+            bid = tournamentbid,
+            createdAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
         };
         string json = JsonUtility.ToJson(newTournamentData);
 
@@ -168,36 +143,11 @@ public class Events_Manager : MonoBehaviour
         {
             if (task.IsCompleted)
             {
-                Create(key);
+                Debug.Log("Tournament created successfully.");
             }
             else
             {
                 Debug.LogError("Failed to create tournament.");
-            }
-        });
-    }
-
-    public void Create(string key)
-    {
-        databaseReference.Child("tournaments").Child(key).GetValueAsync().ContinueWithOnMainThread(task =>
-        {
-            if (task.IsCompleted)
-            {
-                DataSnapshot snapshot = task.Result;
-                TournamentData tournamentData = JsonUtility.FromJson<TournamentData>(snapshot.GetRawJsonValue());
-
-                GameObject tournamentObject = Instantiate(tournamentPref, content.transform);
-                Tournament tournamentComponent = tournamentObject.GetComponent<Tournament>();
-                tournamentComponent.SetData(tournamentData.name, tournamentData.type, tournamentData.players, tournamentData.bid);
-
-                instantiatedTournaments[key] = tournamentObject;
-
-                Join(key);
-                tourr.SetActive(true);
-            }
-            else
-            {
-                Debug.LogError("Failed to retrieve tournament data.");
             }
         });
     }
@@ -237,7 +187,6 @@ public class Events_Manager : MonoBehaviour
         }
     }
 
-
     public void DeleteTournament(string tournamentKey)
     {
         databaseReference.Child("tournaments").Child(tournamentKey).RemoveValueAsync().ContinueWithOnMainThread(task =>
@@ -259,6 +208,34 @@ public class Events_Manager : MonoBehaviour
             }
         });
     }
+
+    private void CheckForExpiredTournaments()
+    {
+        databaseReference.Child("tournaments").GetValueAsync().ContinueWithOnMainThread(task =>
+        {
+            if (task.IsFaulted)
+            {
+                Debug.LogError("Failed to retrieve tournaments from database.");
+                return;
+            }
+
+            DataSnapshot snapshot = task.Result;
+            long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+            foreach (DataSnapshot tournamentSnapshot in snapshot.Children)
+            {
+                TournamentData tournamentData = JsonUtility.FromJson<TournamentData>(tournamentSnapshot.GetRawJsonValue());
+                long createdAt = tournamentData.createdAt;
+
+                // Check if 2 days (172800 seconds) have passed
+                if (currentTime - createdAt > 172800)
+                {
+                    string tournamentKey = tournamentSnapshot.Key;
+                    DeleteTournament(tournamentKey);
+                }
+            }
+        });
+    }
 }
 
 [System.Serializable]
@@ -268,4 +245,5 @@ public class TournamentData
     public string type;
     public int players;
     public float bid;
+    public long createdAt;
 }
