@@ -412,6 +412,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerPrefab: {fileID: 2116951252555573356, guid: 2a318a107e43abf4ab86bdeb1bd41e54,
     type: 3}
+  spawnPoint: {fileID: 233451034}
 --- !u!1 &454688285
 GameObject:
   m_ObjectHideFlags: 0
