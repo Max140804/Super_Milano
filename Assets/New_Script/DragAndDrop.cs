@@ -26,6 +26,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
     private Vector3 networkPosition;
     private Quaternion networkRotation;
+    public bool isMine;
 
     private void Awake()
     {
@@ -277,5 +278,6 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
             rectTransform.position = Vector3.Lerp(rectTransform.position, networkPosition, Time.deltaTime * 10);
             rectTransform.rotation = Quaternion.Lerp(rectTransform.rotation, networkRotation, Time.deltaTime * 10);
         }
+        isMine = photonView.IsMine;
     }
 }
