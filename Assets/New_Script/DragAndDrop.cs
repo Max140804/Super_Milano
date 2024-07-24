@@ -52,14 +52,6 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         }
     }
 
-    private void Update()
-    {
-        if(photonView == null)
-        {
-            return;
-        }
-    }
-
     public void OnBeginDrag(PointerEventData eventData)
     {
         if (!photonView.IsMine || !turn.IsMyTurn())
