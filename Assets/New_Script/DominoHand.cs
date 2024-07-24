@@ -34,6 +34,11 @@ public class DominoHand : MonoBehaviourPun
         if (hand.Contains(domino))
         {
             hand.Remove(domino);
+            /*PhotonView dominoPhotonView = domino.GetComponent<PhotonView>();
+            if (dominoPhotonView != null)
+            {
+                dominoPhotonView.TransferOwnership(0);
+            }*/
             CheckForGameOver();
             return true;
         }
