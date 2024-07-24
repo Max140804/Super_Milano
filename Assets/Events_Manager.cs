@@ -117,6 +117,7 @@ public class Events_Manager : MonoBehaviourPunCallbacks
             bid = tournamentbid
         };
         tournamentDataDictionary[key] = newTournamentData;
+        PhotonNetwork.JoinRoom(key);
         Create(key);
     }
 
