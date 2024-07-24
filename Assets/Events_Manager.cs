@@ -125,16 +125,17 @@ public class Events_Manager : MonoBehaviourPunCallbacks
         var tournamentComponent = PhotonNetwork.Instantiate(tournamentPref.name, content.transform.position, Quaternion.identity).GetComponent<Tournament>();
         var tournamentData = tournamentDataDictionary[key];
         tournamentComponent.SetData(tournamentData.name, tournamentData.type, tournamentData.players, tournamentData.bid);
+        Join(key);
         PhotonNetwork.Instantiate(tournamentPref.name, content.transform.position, Quaternion.identity);
         tourr.SetActive(true);
-        Join(key);
+       
     }
 
     public void Join(string key)
     {
         Debug.Log("Joining tournament with key: " + key);
         currenttour = key;
-
+        PhotonNetwork.JoinRoom(key);
         tourr.SetActive(true);
 
         tourrName.text = HelperClass.Decrypt(key, playerId);
