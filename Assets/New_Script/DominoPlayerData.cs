@@ -7,7 +7,7 @@ public class DominoPlayerData : MonoBehaviourPunCallbacks
     public TextMeshProUGUI playerNameText;
     [HideInInspector]public string playerName;
 
-    void Awake()
+    void Start()
     {
         if (photonView.IsMine)
         {

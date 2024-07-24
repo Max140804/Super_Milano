@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
@@ -10,9 +9,36 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
 
     private void Start()
     {
-        GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
-        instance.transform.parent = spawnPoint;
+        if (PhotonNetwork.IsConnected)
+        {
+            SpawnPlayer();
+        }
     }
 
-   
+    private void SpawnPlayer()
+    {
+        GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
+        instance.transform.parent = spawnPoint;
+
+        PhotonView photonView = instance.GetComponent<PhotonView>();
+        if (photonView != null)
+        {
+            photonView.RPC("SetPlayerName", RpcTarget.AllBuffered, PhotonNetwork.NickName);
+        }
+
+        Debug.Log("Player prefab instantiated: " + instance.name);
+    }
+
+    public override void OnJoinedRoom()
+    {
+        SpawnPlayer();
+    }
+
+    public override void OnPlayerEnteredRoom(Player newPlayer)
+    {
+        if (!PhotonNetwork.IsMasterClient)
+        {
+            SpawnPlayer();
+        }
+    }
 }
