@@ -258,9 +258,26 @@ public class Events_Manager : MonoBehaviour
             bool nameAdded = false;
             for (int i = 0; i < names16UI.Count; i++)
             {
-                    names16UI[i].text = playerName;
-                    nameAdded = true;
-                Debug.Log("Added player to the list: " + playerName);
+                 names16UI[i].text = playerName;
+                 nameAdded = true;
+                 Debug.Log("Added player to the list: " + playerName);
+
+                    // Update the database
+                    databaseReference.Child("tournaments").Child(key).Child("players").Child("player" + (i + 1)).SetValueAsync(playerName).ContinueWithOnMainThread(task =>
+                    {
+                        if (task.IsCompleted)
+                        {
+                            Debug.Log("Player added to tournament in the database.");
+                            names16UI[i].text = playerName;
+                        }
+                        else
+                        {
+                            Debug.LogError("Failed to add player to tournament in the database.");
+                        }
+                    });
+
+                    break;
+
             }
 
             if (!nameAdded)
