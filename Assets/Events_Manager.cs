@@ -16,7 +16,6 @@ public class Events_Manager : MonoBehaviour
     public Tournament tournamentPrefab;
     public GameObject tournamentPref;
     public GameObject parent;
-    public GameObject CurrentTourParent;
     public GameObject content;
 
     public GameObject tourr;
@@ -27,16 +26,6 @@ public class Events_Manager : MonoBehaviour
     public List<Text> names8UI;
     public List<Text> names4UI;
     public List<Text> names2UI;
-
-    private List<string> names16 = new List<string>();
-    private List<string> names8 = new List<string>();
-    private List<string> names4 = new List<string>();
-    private List<string> names2 = new List<string>();
-
-    public List<Text> ready16;
-    public List<Text> ready8;
-    public List<Text> ready4;
-    public List<Text> ready2;
 
     public string currenttour;
     public string currentusername;
@@ -49,16 +38,6 @@ public class Events_Manager : MonoBehaviour
     private DatabaseReference databaseReference;
     private Dictionary<string, GameObject> instantiatedTournaments = new Dictionary<string, GameObject>();
 
-    public void SetTournamentType(string type)
-    {
-        tournamenttype = type;
-    }
-
-    public void SetTournamentBid(float bid)
-    {
-        tournamentbid = bid;
-    }
-
     private void Start()
     {
         FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
@@ -66,6 +45,7 @@ public class Events_Manager : MonoBehaviour
             FirebaseApp app = FirebaseApp.DefaultInstance;
             databaseReference = FirebaseDatabase.DefaultInstance.RootReference;
             ListenForTournamentChanges();
+            LoadExistingTournaments(); // Load existing tournaments
             InvokeRepeating("CheckForExpiredTournaments", 0, 3600); // Check every hour
         });
     }
@@ -74,6 +54,41 @@ public class Events_Manager : MonoBehaviour
     {
         databaseReference.Child("tournaments").ChildAdded += HandleTournamentAdded;
         databaseReference.Child("tournaments").ChildRemoved += HandleTournamentRemoved;
+    }
+
+    private void LoadExistingTournaments()
+    {
+        databaseReference.Child("tournaments").GetValueAsync().ContinueWithOnMainThread(task =>
+        {
+            if (task.IsFaulted)
+            {
+                Debug.LogError("Failed to retrieve tournaments from database.");
+                return;
+            }
+
+            DataSnapshot snapshot = task.Result;
+
+            foreach (DataSnapshot tournamentSnapshot in snapshot.Children)
+            {
+                TournamentData tournamentData = JsonUtility.FromJson<TournamentData>(tournamentSnapshot.GetRawJsonValue());
+                string tournamentName = HelperClass.Decrypt(tournamentSnapshot.Key, playerId);
+
+                // Check if the tournament has already been instantiated
+                if (!instantiatedTournaments.ContainsKey(tournamentName))
+                {
+                    parent.GetComponent<RectTransform>().sizeDelta = new Vector2(parent.GetComponent<RectTransform>().sizeDelta.x, parent.GetComponent<RectTransform>().sizeDelta.y + 350);
+
+                    // Instantiate the tournament prefab and set data
+                    GameObject tournamentObject = Instantiate(tournamentPref, content.transform);
+                    tournamentObject.transform.parent = content.transform;
+                    Tournament tournamentComponent = tournamentObject.GetComponent<Tournament>();
+                    tournamentComponent.SetData(tournamentName, tournamentData.type, tournamentData.players, tournamentData.bid);
+
+                    // Add the instantiated tournament to the dictionary
+                    instantiatedTournaments[tournamentName] = tournamentObject;
+                }
+            }
+        });
     }
 
     private void HandleTournamentAdded(object sender, ChildChangedEventArgs e)
@@ -85,11 +100,12 @@ public class Events_Manager : MonoBehaviour
         }
 
         DataSnapshot snapshot = e.Snapshot;
-        string tournamentName = snapshot.Key;
+        string tournamentKey = snapshot.Key;
 
         if (snapshot.Exists)
         {
             TournamentData tournamentData = JsonUtility.FromJson<TournamentData>(snapshot.GetRawJsonValue());
+            string tournamentName = HelperClass.Decrypt(tournamentKey, playerId);
 
             // Check if the tournament has already been instantiated
             if (!instantiatedTournaments.ContainsKey(tournamentName))
@@ -100,7 +116,7 @@ public class Events_Manager : MonoBehaviour
                 GameObject tournamentObject = Instantiate(tournamentPref, content.transform);
                 tournamentObject.transform.parent = content.transform;
                 Tournament tournamentComponent = tournamentObject.GetComponent<Tournament>();
-                tournamentComponent.SetData(tournamentname.text, tournamentData.type, tournamentData.players, tournamentData.bid);
+                tournamentComponent.SetData(tournamentName, tournamentData.type, tournamentData.players, tournamentData.bid);
 
                 // Add the instantiated tournament to the dictionary
                 instantiatedTournaments[tournamentName] = tournamentObject;
@@ -117,7 +133,8 @@ public class Events_Manager : MonoBehaviour
         }
 
         DataSnapshot snapshot = e.Snapshot;
-        string tournamentName = snapshot.Key;
+        string tournamentKey = snapshot.Key;
+        string tournamentName = HelperClass.Decrypt(tournamentKey, playerId);
 
         if (instantiatedTournaments.ContainsKey(tournamentName))
         {
@@ -126,19 +143,9 @@ public class Events_Manager : MonoBehaviour
         }
     }
 
-    private void HandleTournamentUpdate(string tournamentName, TournamentData tournamentData)
-    {
-        // Update the existing tournament
-        if (instantiatedTournaments.ContainsKey(tournamentName))
-        {
-            Tournament tournamentComponent = instantiatedTournaments[tournamentName].GetComponent<Tournament>();
-            tournamentComponent.SetData(tournamentname.text, tournamentData.type, tournamentData.players, tournamentData.bid);
-        }
-    }
-
     public void CreateTournament()
     {
-        if(tournamentname.text.Length <= 0)
+        if (tournamentname.text.Length <= 0)
         {
             menu.errorpanel.SetActive(true);
             menu.errorpanel_text.text = "Invalid TournamentName";
@@ -148,7 +155,7 @@ public class Events_Manager : MonoBehaviour
         string key = HelperClass.Encrypt(tournamentname.text, playerId);
         var newTournamentData = new TournamentData
         {
-            name = HelperClass.Encrypt(tournamentname.text, playerId),
+            name = tournamentname.text, // Store the original name
             type = tournamenttype,
             players = 16,
             bid = tournamentbid,
@@ -161,6 +168,8 @@ public class Events_Manager : MonoBehaviour
             if (task.IsCompleted)
             {
                 Debug.Log("Tournament created successfully.");
+                tourr.SetActive(true);
+                tourrName.text = tournamentname.text;
             }
             else
             {
@@ -175,31 +184,45 @@ public class Events_Manager : MonoBehaviour
         currenttour = key;
         tourr.SetActive(true);
 
+        // Decrypt the tournament name for display
         tourrName.text = HelperClass.Decrypt(key, playerId);
 
+        // Get the player's name
         string playerName = PhotonNetwork.NickName;
+        Debug.Log("Player name: " + playerName);
+
+        // Flag to check if player is already in the list
+        bool playerAlreadyJoined = false;
 
         // Check if the player is already in the list
-        bool playerAlreadyJoined = false;
         foreach (Text nameText in names16UI)
         {
             if (nameText.text == playerName)
             {
                 playerAlreadyJoined = true;
+                Debug.Log("Player already in the list.");
                 break;
             }
         }
 
-        // If the player is not already in the list, add them
+        // If the player is not in the list, add them
         if (!playerAlreadyJoined)
         {
+            bool nameAdded = false;
             for (int i = 0; i < names16UI.Count; i++)
             {
                 if (string.IsNullOrEmpty(names16UI[i].text))
                 {
                     names16UI[i].text = playerName;
+                    nameAdded = true;
+                    Debug.Log("Added player to the list: " + playerName);
                     break;
                 }
+            }
+
+            if (!nameAdded)
+            {
+                Debug.LogWarning("No empty slots available to add player.");
             }
         }
     }
@@ -211,10 +234,11 @@ public class Events_Manager : MonoBehaviour
             if (task.IsCompleted)
             {
                 // Remove the instantiated tournament from the dictionary and destroy it
-                if (instantiatedTournaments.ContainsKey(tournamentKey))
+                string tournamentName = HelperClass.Decrypt(tournamentKey, playerId);
+                if (instantiatedTournaments.ContainsKey(tournamentName))
                 {
-                    Destroy(instantiatedTournaments[tournamentKey]);
-                    instantiatedTournaments.Remove(tournamentKey);
+                    Destroy(instantiatedTournaments[tournamentName]);
+                    instantiatedTournaments.Remove(tournamentName);
                 }
 
                 Debug.Log("Tournament deleted successfully");
