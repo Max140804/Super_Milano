@@ -25,7 +25,7 @@ public class DominoHand : MonoBehaviourPun
         }
         else
         {
-            Debug.Log("PhotonView component not found on the domino prefab.");
+            
         }
     }
 

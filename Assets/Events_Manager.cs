@@ -233,17 +233,10 @@ public class Events_Manager : MonoBehaviour
         currenttour = key;
         tourr.SetActive(true);
         playersInTour++;
-        // Decrypt the tournament name for display
         tourrName.text = HelperClass.Decrypt(key, playerId);
-
-        // Get the player's name
         string playerName = PhotonNetwork.NickName;
         Debug.Log("Player name: " + playerName);
-
-        // Flag to check if player is already in the list
         bool playerAlreadyJoined = false;
-
-        // Check if the player is already in the list
         foreach (Text nameText in names16UI)
         {
             if (nameText.text == playerName)
@@ -253,19 +246,14 @@ public class Events_Manager : MonoBehaviour
                 break;
             }
         }
-
-        // If the player is not in the list, add them
         if (!playerAlreadyJoined)
         {
             bool nameAdded = false;
             for (int i = 0; i < names16UI.Count; i++)
             {
-
                  names16UI[playersInTour].text = playerName;
                  nameAdded = true;
                  Debug.Log("Added player to the list: " + playerName);
-
-                    // Update the database
                     databaseReference.Child("tournaments").Child(key).Child("players").Child("player" + (i + 1)).SetValueAsync(playerName).ContinueWithOnMainThread(task =>
                     {
                         if (task.IsCompleted)
@@ -338,6 +326,16 @@ public class Events_Manager : MonoBehaviour
                 }
             }
         });
+    }
+
+    public void RefreshTournamentList()
+    {
+        foreach (var tournament in instantiatedTournaments)
+        {
+            Destroy(tournament.Value);
+        }
+        instantiatedTournaments.Clear();
+        LoadExistingTournaments();
     }
 }
 
