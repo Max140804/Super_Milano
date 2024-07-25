@@ -1,6 +1,7 @@
 using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
+using System.Collections;
 
 public class PlayerSpawner : MonoBehaviourPunCallbacks
 {
@@ -17,8 +18,16 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
 
     private void SpawnPlayer()
     {
+        StartCoroutine(SpawnPlayerCoroutine());
+    }
+
+    private IEnumerator SpawnPlayerCoroutine()
+    {
         GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
-        instance.transform.parent = spawnPoint;
+
+        yield return null;
+
+        instance.transform.SetParent(spawnPoint);
 
         PhotonView photonView = instance.GetComponent<PhotonView>();
         if (photonView != null)
@@ -26,7 +35,7 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
             photonView.RPC("SetPlayerName", RpcTarget.AllBuffered, PhotonNetwork.NickName);
         }
 
-        Debug.Log("Player prefab instantiated: " + instance.name);
+        Debug.Log("Player prefab instantiated and parented: " + instance.name);
     }
 
     public override void OnJoinedRoom()
@@ -38,14 +47,7 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
     {
         if (!PhotonNetwork.IsMasterClient)
         {
-            GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
-            instance.transform.parent = spawnPoint;
-
-            PhotonView photonView = instance.GetComponent<PhotonView>();
-            if (photonView != null)
-            {
-                photonView.RPC("SetPlayerName", RpcTarget.AllBuffered, PhotonNetwork.NickName);
-            }
+            SpawnPlayer();
         }
     }
 }
