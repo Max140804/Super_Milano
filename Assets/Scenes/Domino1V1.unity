@@ -820,8 +820,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 1072.1707, y: 826}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchoredPosition: {x: 0, y: -976}
+  m_SizeDelta: {x: 1902.2627, y: 466.9478}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &949870705
 MonoBehaviour:
@@ -843,7 +843,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: It is max's turn.
+  m_text: It is max's turn
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: e7bba2a87e816764797518cc7d793c40, type: 2}
   m_sharedMaterial: {fileID: -7891503910527080218, guid: e7bba2a87e816764797518cc7d793c40,
@@ -871,12 +871,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 160.5
+  m_fontSize: 184.6
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 160.5
-  m_fontSizeMax: 233.7
+  m_fontSizeMin: 152.4
+  m_fontSizeMax: 184.6
   m_fontStyle: 1
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -887,7 +887,7 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_enableWordWrapping: 0
+  m_enableWordWrapping: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
@@ -1353,6 +1353,7 @@ GameObject:
   - component: {fileID: 1483741459}
   - component: {fileID: 1483741460}
   - component: {fileID: 1483741461}
+  - component: {fileID: 1483741462}
   m_Layer: 0
   m_Name: TurnManager
   m_TagString: Untagged
@@ -1368,7 +1369,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1483741458}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -502.18982, y: -1032.2792, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.46838608, y: 0.46838608, z: 0.46838608}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1411,6 +1412,19 @@ MonoBehaviour:
   sceneViewId: 2
   InstantiationId: 0
   isRuntimeInstantiated: 0
+--- !u!114 &1483741462
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1483741458}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62ea97218fee22742ab0a9dc82b66e26, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  statusText: {fileID: 949870705}
 --- !u!1 &1647884196
 GameObject:
   m_ObjectHideFlags: 0
