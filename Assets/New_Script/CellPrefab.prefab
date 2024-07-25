@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 5877415898327858487}
   - component: {fileID: 5877415898327858486}
   - component: {fileID: 6161662117609471139}
-  - component: {fileID: 2216823110706589493}
   - component: {fileID: -5769907914015615387}
   m_Layer: 5
   m_Name: CellPrefab
@@ -124,18 +123,6 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 30, y: 30}
   m_EdgeRadius: 0
---- !u!210 &2216823110706589493
-SortingGroup:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5877415898327858484}
-  m_Enabled: 1
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_SortAtRoot: 0
 --- !u!114 &-5769907914015615387
 MonoBehaviour:
   m_ObjectHideFlags: 0

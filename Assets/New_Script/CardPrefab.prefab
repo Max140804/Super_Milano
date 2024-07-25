@@ -15,7 +15,6 @@ GameObject:
   - component: {fileID: 4046050993946735532}
   - component: {fileID: 2474760279359014803}
   - component: {fileID: 8153480149065946403}
-  - component: {fileID: 8226948756591024480}
   - component: {fileID: 6479034968244150648}
   m_Layer: 5
   m_Name: CardPrefab
@@ -147,20 +146,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   opponentCardImage: {fileID: 3137382137172561982}
---- !u!114 &8226948756591024480
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 554786974299992167}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 37346fa1047ba114aaaf60999122fefe, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  topValue: 0
-  bottomValue: 0
 --- !u!114 &6479034968244150648
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -191,10 +176,6 @@ GameObject:
   - component: {fileID: 1446463773047421727}
   - component: {fileID: 7656700230207259364}
   - component: {fileID: 6866959308509116688}
-  - component: {fileID: 3428955664103977386}
-  - component: {fileID: 4266091791638092744}
-  - component: {fileID: 3420922500227380132}
-  - component: {fileID: 4773632361349988343}
   m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
@@ -286,6 +267,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   topValue: 0
   bottomValue: 0
+  isTop: 0
 --- !u!210 &6866959308509116688
 SortingGroup:
   m_ObjectHideFlags: 0
@@ -298,69 +280,6 @@ SortingGroup:
   m_SortingLayer: 0
   m_SortingOrder: 1
   m_SortAtRoot: 0
---- !u!114 &3428955664103977386
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 554786974744248438}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d98999db1027558469a6d6e3a9e09165, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  isBottomHalf: 1
-  topHalf: {fileID: 6048193678491808569}
-  bottomHalf: {fileID: 554786974744248437}
-  visibilityManager: {fileID: 4266091791638092744}
-  isMine: 0
---- !u!114 &4266091791638092744
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 554786974744248438}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f891cb1fc55b7854591838a40444d3de, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  opponentCardImage: {fileID: 3137382137172561982}
---- !u!114 &3420922500227380132
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 554786974744248438}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f29057ff6c92a5445826ed1ed92a15e7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cardData: {fileID: 11400000, guid: 54cc1a53c54f61342b6d615c29c922a1, type: 2}
-  image: {fileID: 8319609792980307993}
-  topValue: 0
-  bottomValue: 0
-  isRotated: 0
---- !u!114 &4773632361349988343
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 554786974744248438}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 627855c7f81362d41938ffe0b1475957, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_SynchronizePosition: 1
-  m_SynchronizeRotation: 1
-  m_SynchronizeScale: 0
-  m_UseLocal: 1
 --- !u!1 &1395387672148361657
 GameObject:
   m_ObjectHideFlags: 0
@@ -632,6 +551,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   topValue: 0
   bottomValue: 0
+  isTop: 1
 --- !u!210 &3846667122347609462
 SortingGroup:
   m_ObjectHideFlags: 0

@@ -16,13 +16,14 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     public bool isBottomHalf;
     private Vector3 offset;
     private PhotonView photonView;
-
+    
     public RectTransform topHalf;
     public RectTransform bottomHalf;
     private int topValue;
     private int bottomValue;
     public CardVisibilityManager visibilityManager;
     TurnManager turn;
+    Status statusText;
 
     private Vector3 networkPosition;
     private Quaternion networkRotation;
@@ -54,7 +55,10 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     private void Update()
     {
         photonView = GetComponentInParent<PhotonView>();
-        isMine = photonView.IsMine;
+        if (photonView != null)
+        {
+            isMine = photonView.IsMine;
+        }
     }
 
 
@@ -186,7 +190,8 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         else
         {
             ResetPosition();
-            Debug.Log("Cannot snap both halves to valid cells.");
+            statusText = FindAnyObjectByType<Status>();
+            statusText.UpdateStatusText("The card provided does not match any of the previously placed cards, try changing cards or rotating the one you have already.");
         }
     }
 
@@ -219,12 +224,10 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
             if (isBottomHalf)
             {
                 cell.cellValue = bottomValue;
-                Debug.Log($"Set cell {cellObject.name} bottom value to {bottomValue}");
             }
             else if (!isBottomHalf)
             {
                 cell.cellValue = topHalf.GetComponent<GetValue>().topValue;
-                Debug.Log($"Set cell {cellObject.name} top value to {topValue}");
             }
         }
     }
