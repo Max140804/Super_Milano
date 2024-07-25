@@ -17,6 +17,7 @@ public class Events_Manager : MonoBehaviour
     public GameObject tournamentPref;
     public GameObject parent;
     public GameObject content;
+    public GameObject currentTour;
 
     public GameObject tourr;
     public TextMeshProUGUI tourrName;
@@ -128,7 +129,6 @@ public class Events_Manager : MonoBehaviour
 
             Debug.Log($"Tournament added: {tournamentName}");
 
-            // Check if the tournament has already been instantiated
             if (!instantiatedTournaments.ContainsKey(tournamentName))
             {
                 parent.GetComponent<RectTransform>().sizeDelta = new Vector2(parent.GetComponent<RectTransform>().sizeDelta.x, parent.GetComponent<RectTransform>().sizeDelta.y + 350);
@@ -236,6 +236,11 @@ public class Events_Manager : MonoBehaviour
         tourrName.text = HelperClass.Decrypt(key, playerId);
         string playerName = PhotonNetwork.NickName;
         Debug.Log("Player name: " + playerName);
+        UpdatePlayerList(key, playerName);
+    }
+
+    private void UpdatePlayerList(string tournamentKey, string playerName)
+    {
         bool playerAlreadyJoined = false;
         foreach (Text nameText in names16UI)
         {
@@ -243,40 +248,68 @@ public class Events_Manager : MonoBehaviour
             {
                 playerAlreadyJoined = true;
                 Debug.Log("Player already in the list.");
-                break;
+                return;
             }
         }
+
         if (!playerAlreadyJoined)
         {
-            bool nameAdded = false;
-            for (int i = 0; i < names16UI.Count; i++)
+            names16UI[playersInTour].text = playerName;
+            databaseReference.Child("tournaments").Child(tournamentKey).Child("players").Child("player" + (playersInTour + 1)).SetValueAsync(playerName).ContinueWithOnMainThread(task =>
             {
-                 names16UI[playersInTour].text = playerName;
-                 nameAdded = true;
-                 Debug.Log("Added player to the list: " + playerName);
-                    databaseReference.Child("tournaments").Child(key).Child("players").Child("player" + (i + 1)).SetValueAsync(playerName).ContinueWithOnMainThread(task =>
-                    {
-                        if (task.IsCompleted)
-                        {
-                            Debug.Log("Player added to tournament in the database.");
-                            names16UI[playersInTour].text = playerName;
-                        }
-                        else
-                        {
-                            Debug.LogError("Failed to add player to tournament in the database.");
-                        }
-                    });
-
-                    break;
-
-            }
-
-            if (!nameAdded)
-            {
-                Debug.LogWarning("No empty slots available to add player.");
-            }
+                if (task.IsCompleted)
+                {
+                    Debug.Log("Player added to tournament in the database.");
+                }
+                else
+                {
+                    Debug.LogError("Failed to add player to tournament in the database.");
+                }
+            });
         }
     }
+
+    public void FinalizeTournament()
+    {
+        if (string.IsNullOrEmpty(currenttour))
+        {
+            Debug.LogWarning("No tournament selected to finalize.");
+            return;
+        }
+
+        string tournamentName = HelperClass.Decrypt(currenttour, playerId);
+
+        if (instantiatedTournaments.ContainsKey(tournamentName))
+        {
+            GameObject tournamentObject = instantiatedTournaments[tournamentName];
+            tournamentObject.transform.SetParent(currentTour.transform);
+            tournamentObject.transform.localPosition = Vector3.zero;
+
+            Tournament tournamentComponent = tournamentObject.GetComponent<Tournament>();
+            if (tournamentComponent != null)
+            {
+                tournamentComponent.DisableEntry();
+            }
+
+            Debug.Log($"Tournament '{tournamentName}' has been finalized and moved under 'currentTour'.");
+            databaseReference.Child("tournaments").Child(currenttour).Child("finalized").SetValueAsync(true).ContinueWithOnMainThread(task =>
+            {
+                if (task.IsCompleted)
+                {
+                    Debug.Log("Tournament finalized status updated in database.");
+                }
+                else
+                {
+                    Debug.LogError("Failed to update tournament finalized status in the database.");
+                }
+            });
+        }
+        else
+        {
+            Debug.LogWarning("Tournament not found in instantiated tournaments.");
+        }
+    }
+
 
     public void DeleteTournament(string tournamentKey)
     {
@@ -319,7 +352,7 @@ public class Events_Manager : MonoBehaviour
                 TournamentData tournamentData = JsonUtility.FromJson<TournamentData>(tournamentSnapshot.GetRawJsonValue());
                 long createdAt = tournamentData.createdAt;
 
-                if (currentTime - createdAt > 180)
+                if (currentTime - createdAt > 1800)
                 {
                     string tournamentKey = tournamentSnapshot.Key;
                     DeleteTournament(tournamentKey);

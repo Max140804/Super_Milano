@@ -17,7 +17,7 @@ public class Tournament : MonoBehaviour
 
     public Image image;
 
-    
+    public bool canJoin = true;
 
     public void SetData(string name, string type, int players, float bid)
     {
@@ -52,13 +52,24 @@ public class Tournament : MonoBehaviour
         Events_Manager eventsManager = GameObject.FindObjectOfType<Events_Manager>();
         MainMenu mainMenu = GameObject.FindObjectOfType<MainMenu>();
 
-        if (eventsManager != null && mainMenu != null)
+        if (eventsManager != null && mainMenu != null && canJoin)
         {
             eventsManager.Join(nameText.text);
+            eventsManager.tourrName.text = nameText.text;
         }
         else
         {
-            Debug.LogWarning("Events_Manager or MainMenu not found in the scene.");
+            eventsManager.tourr.SetActive(true);
+            eventsManager.tourrName.text = nameText.text;
         }
+    }
+
+    public void DisableEntry()
+    {
+        canJoin = false;
+
+        Events_Manager eventsManager = GameObject.FindObjectOfType<Events_Manager>();
+
+        this.transform.parent = eventsManager.currentTour.transform; 
     }
 }

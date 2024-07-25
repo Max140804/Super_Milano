@@ -17839,7 +17839,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1009134756}
         m_TargetAssemblyTypeName: Events_Manager, Assembly-CSharp
-        m_MethodName: Ready
+        m_MethodName: FinalizeTournament
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -31982,6 +31982,7 @@ MonoBehaviour:
     type: 3}
   parent: {fileID: 1969908051}
   content: {fileID: 1969908051}
+  currentTour: {fileID: 2143387241}
   tourr: {fileID: 771832047}
   tourrName: {fileID: 1225881084}
   menu: {fileID: 1636957250}
@@ -53901,6 +53902,18 @@ MonoBehaviour:
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 1685464579}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
         m_CallState: 2
 --- !u!114 &1807201485
 MonoBehaviour:
