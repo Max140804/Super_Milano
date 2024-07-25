@@ -16,7 +16,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     public bool isBottomHalf;
     private Vector3 offset;
     private PhotonView photonView;
-    
+
     public RectTransform topHalf;
     public RectTransform bottomHalf;
     private int topValue;
@@ -55,18 +55,19 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     private void Update()
     {
         photonView = GetComponentInParent<PhotonView>();
-        if (photonView != null)
+
+        if (!photonView.IsMine)
         {
-            isMine = photonView.IsMine;
+            rectTransform.position = Vector3.Lerp(rectTransform.position, networkPosition, Time.deltaTime * 10);
+            rectTransform.rotation = Quaternion.Lerp(rectTransform.rotation, networkRotation, Time.deltaTime * 10);
         }
     }
-
 
     public void OnBeginDrag(PointerEventData eventData)
     {
         if (!photonView.IsMine || !turn.IsMyTurn())
         {
-            Debug.Log("Not your turn or not your object!");
+            statusText.UpdateStatusText("Not your turn");
             return;
         }
 
@@ -133,7 +134,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
             Debug.Log("No collider hit.");
         }
 
-        photonView.RPC("DistributeCardPositions", RpcTarget.All);
+        photonView.RPC("UpdatePositionAndRotation", RpcTarget.All, rectTransform.position, rectTransform.rotation);
 
         turn.EndTurn();
     }
@@ -266,6 +267,15 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         return new Vector3(index * spacing, 0, 0); // Distribute horizontally
     }
 
+    [PunRPC]
+    private void UpdatePositionAndRotation(Vector3 newPosition, Quaternion newRotation)
+    {
+        rectTransform.position = newPosition;
+        rectTransform.rotation = newRotation;
+
+        Debug.Log(newPosition);
+    }
+
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
         if (stream.IsWriting)
@@ -279,14 +289,4 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
             networkRotation = (Quaternion)stream.ReceiveNext();
         }
     }
-
-    /*private void Update()
-    {
-        if (!photonView.IsMine)
-        {
-            rectTransform.position = Vector3.Lerp(rectTransform.position, networkPosition, Time.deltaTime * 10);
-            rectTransform.rotation = Quaternion.Lerp(rectTransform.rotation, networkRotation, Time.deltaTime * 10);
-        }
-        isMine = photonView.IsMine;
-    }*/
 }

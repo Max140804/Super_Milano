@@ -26,14 +26,6 @@ public class Grid : MonoBehaviour
 
             Vector2Int cellIndex = GetCellIndexFromLocalPosition(localMousePosition);
 
-            if (IsValidCellIndex(cellIndex))
-            {
-                Debug.Log($"Clicked on cell {cellIndex}");
-            }
-            else
-            {
-                Debug.Log($"Clicked outside the grid.");
-            }
         }
     }
 

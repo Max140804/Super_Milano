@@ -95,7 +95,17 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
 
         Shuffle(allDominoes);
 
-        int tilesPerPlayer = GetTilesPerPlayer();
+        int tilesPerPlayer = 7;
+
+        if (gameMode == GameModes.OneVsOne)
+        {
+            tilesPerPlayer = 7;
+        }
+        else if (gameMode == GameModes.AllFives)
+        {
+            tilesPerPlayer = 5;
+        }
+
         int currentDominoIndex = 0;
 
         foreach (DominoHand player in players)
