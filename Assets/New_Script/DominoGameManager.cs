@@ -30,7 +30,7 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
 
     public GameModes gameMode = GameModes.OneVsOne;
     public bool isTournamentGame = false;
-    TurnManager turn;
+    private TurnManager turn;
     public bool InBoneyard;
 
     private const byte TournamentMatchEndEventCode = 1;
@@ -47,7 +47,7 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
         players.AddRange(FindObjectsOfType<DominoHand>());
         boneYard = FindObjectOfType<DominoBoneYard>();
 
-        DealDominoes();
+        StartCoroutine(DealDominoesWithDelay());
 
         FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task =>
         {
@@ -80,6 +80,13 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
         }
 
         return dominoInstance;
+    }
+
+    IEnumerator DealDominoesWithDelay()
+    {
+        yield return new WaitForSeconds(3f);
+
+        DealDominoes();
     }
 
     void DealDominoes()
@@ -124,7 +131,6 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
             boneYard.AddToBoneYard(domino);
         }
     }
-
 
     int GetTilesPerPlayer()
     {
@@ -284,7 +290,6 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
     IEnumerator ResetAndDealNewRound()
     {
         yield return new WaitForSeconds(2);
-
 
         foreach (var domino in allDominoes)
         {

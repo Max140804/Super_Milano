@@ -2,62 +2,85 @@ using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
 using System.Collections;
+using System.Collections.Generic;
 
 public class PlayerSpawner : MonoBehaviourPunCallbacks
 {
     public GameObject playerPrefab;
-    public Transform SpawnpointDown;
+    public Transform spawnPointDown;
     public Transform spawnPointUp;
+
+    private Dictionary<int, GameObject> playerInstances = new Dictionary<int, GameObject>();
 
     private void Start()
     {
         if (PhotonNetwork.IsConnected)
         {
-            SpawnPlayer();
+            StartCoroutine(SpawnExistingPlayers());
         }
     }
 
-    private void SpawnPlayer()
+    private IEnumerator SpawnExistingPlayers()
     {
-        StartCoroutine(SpawnPlayerCoroutine());
-    }
+        // Delay to ensure scene has fully loaded
+        yield return new WaitForSeconds(1f);
 
-    private IEnumerator SpawnPlayerCoroutine()
-    {
-        Transform spawnPoint = PhotonNetwork.LocalPlayer.IsLocal ? SpawnpointDown : spawnPointUp;
-
-        GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
-
-        yield return null;
-
-        instance.transform.SetParent(spawnPoint);
-
-        PhotonView photonView = instance.GetComponent<PhotonView>();
-        if (photonView != null)
+        foreach (Player player in PhotonNetwork.PlayerList)
         {
-            photonView.RPC("SetPlayerName", RpcTarget.AllBuffered, PhotonNetwork.NickName);
+            SpawnPlayerFor(player);
         }
+    }
 
-        Debug.Log("Player prefab instantiated and parented: " + instance.name);
+    private void SpawnPlayerFor(Player player)
+    {
+        Transform spawnPoint = player.IsLocal ? spawnPointDown : spawnPointUp;
+
+        if (player.TagObject == null)
+        {
+            GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
+
+            // Preserve original scale
+            Vector3 originalScale = instance.transform.localScale;
+
+            // Set parent and reset scale
+            instance.transform.SetParent(spawnPoint);
+            instance.transform.localScale = originalScale;
+
+            player.TagObject = instance;
+            playerInstances[player.ActorNumber] = instance;
+
+            PhotonView photonView = instance.GetComponent<PhotonView>();
+            if (photonView != null && player.IsLocal)
+            {
+                photonView.RPC("SetPlayerName", RpcTarget.AllBuffered, PhotonNetwork.NickName);
+            }
+
+            Debug.Log("Player prefab instantiated and parented: " + instance.name);
+        }
+        else
+        {
+            // Ensure the existing instance is parented correctly
+            GameObject instance = (GameObject)player.TagObject;
+            instance.transform.SetParent(spawnPoint);
+            instance.transform.localPosition = Vector3.zero; // Adjust if necessary
+
+            Debug.Log("Player prefab already exists, re-parented: " + instance.name);
+        }
     }
 
     public override void OnJoinedRoom()
     {
-        GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, SpawnpointDown.position, Quaternion.identity);
-        instance.transform.SetParent(SpawnpointDown);
+        if (!playerInstances.ContainsKey(PhotonNetwork.LocalPlayer.ActorNumber))
+        {
+            SpawnPlayerFor(PhotonNetwork.LocalPlayer);
+        }
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
-        if (PhotonNetwork.LocalPlayer == newPlayer)
-        { 
-            GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, SpawnpointDown.position, Quaternion.identity);
-            instance.transform.SetParent(SpawnpointDown);
-        }
-        else
+        if (!playerInstances.ContainsKey(newPlayer.ActorNumber))
         {
-            GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPointUp.position, Quaternion.identity);
-            instance.transform.SetParent(spawnPointUp);
+            SpawnPlayerFor(newPlayer);
         }
     }
 }
