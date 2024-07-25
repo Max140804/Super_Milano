@@ -6,14 +6,14 @@ using System.Collections;
 public class PlayerSpawner : MonoBehaviourPunCallbacks
 {
     public GameObject playerPrefab;
-    public Transform spawnPoint;
+    public Transform SpawnpointDown;
+    public Transform spawnPointUp;
 
     private void Start()
     {
         if (PhotonNetwork.IsConnected)
         {
-            GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
-            instance.transform.SetParent(spawnPoint);
+            SpawnPlayer();
         }
     }
 
@@ -24,6 +24,8 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
 
     private IEnumerator SpawnPlayerCoroutine()
     {
+        Transform spawnPoint = PhotonNetwork.LocalPlayer.IsLocal ? SpawnpointDown : spawnPointUp;
+
         GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
 
         yield return null;
@@ -41,16 +43,21 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
 
     public override void OnJoinedRoom()
     {
-        GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
-        instance.transform.SetParent(spawnPoint);
+        GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, SpawnpointDown.position, Quaternion.identity);
+        instance.transform.SetParent(SpawnpointDown);
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
-        if (!PhotonNetwork.IsMasterClient)
+        if (PhotonNetwork.LocalPlayer == newPlayer)
+        { 
+            GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, SpawnpointDown.position, Quaternion.identity);
+            instance.transform.SetParent(SpawnpointDown);
+        }
+        else
         {
-            GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
-            instance.transform.SetParent(spawnPoint);
+            GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPointUp.position, Quaternion.identity);
+            instance.transform.SetParent(spawnPointUp);
         }
     }
 }
