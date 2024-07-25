@@ -12,7 +12,8 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
     {
         if (PhotonNetwork.IsConnected)
         {
-            SpawnPlayer();
+            GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
+            instance.transform.SetParent(spawnPoint);
         }
     }
 
@@ -40,14 +41,16 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
 
     public override void OnJoinedRoom()
     {
-        SpawnPlayer();
+        GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
+        instance.transform.SetParent(spawnPoint);
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
         if (!PhotonNetwork.IsMasterClient)
         {
-            SpawnPlayer();
+            GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
+            instance.transform.SetParent(spawnPoint);
         }
     }
 }
