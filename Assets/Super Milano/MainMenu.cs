@@ -1150,7 +1150,7 @@ public class MainMenu : MonoBehaviourPunCallbacks
 
         if (PhotonNetwork.IsMasterClient && PhotonNetwork.CurrentRoom.PlayerCount == players)
         {
-            if (players == 2)
+            if (players == 1)
             {
                 playButton1v1.SetActive(true);
             }
@@ -1165,7 +1165,7 @@ public class MainMenu : MonoBehaviourPunCallbacks
         }
         else
         {
-            if (players == 2)
+            if (players == 1)
             {
                 playButton1v1.SetActive(false);
             }
