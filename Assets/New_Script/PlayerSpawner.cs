@@ -22,7 +22,6 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
 
     private IEnumerator SpawnExistingPlayers()
     {
-        // Delay to ensure scene has fully loaded
         yield return new WaitForSeconds(1f);
 
         foreach (Player player in PhotonNetwork.PlayerList)
@@ -39,11 +38,9 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
         {
             GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
 
-            // Preserve original scale
             Vector3 originalScale = instance.transform.localScale;
-
-            // Set parent and reset scale
             instance.transform.SetParent(spawnPoint);
+            instance.transform.localPosition = Vector3.zero;
             instance.transform.localScale = originalScale;
 
             player.TagObject = instance;
@@ -59,10 +56,9 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
         }
         else
         {
-            // Ensure the existing instance is parented correctly
             GameObject instance = (GameObject)player.TagObject;
             instance.transform.SetParent(spawnPoint);
-            instance.transform.localPosition = Vector3.zero; // Adjust if necessary
+            instance.transform.localPosition = Vector3.zero;
 
             Debug.Log("Player prefab already exists, re-parented: " + instance.name);
         }

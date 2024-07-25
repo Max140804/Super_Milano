@@ -44,7 +44,6 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
     void Start()
     {
         InitializeDominoes();
-        players.AddRange(FindObjectsOfType<DominoHand>());
         boneYard = FindObjectOfType<DominoBoneYard>();
 
         StartCoroutine(DealDominoesWithDelay());
@@ -84,13 +83,16 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
 
     IEnumerator DealDominoesWithDelay()
     {
-        yield return new WaitForSeconds(3f);
+        yield return new WaitForSeconds(5f);
 
         DealDominoes();
     }
 
     void DealDominoes()
     {
+
+        players.AddRange(FindObjectsOfType<DominoHand>());
+
         Shuffle(allDominoes);
 
         int tilesPerPlayer = GetTilesPerPlayer();
@@ -112,8 +114,6 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
                 }
             }
         }
-
-        // Add remaining tiles to the boneYard
         for (int i = currentDominoIndex; i < allDominoes.Count; i++)
         {
             GameObject domino = allDominoes[i];
@@ -124,8 +124,7 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
 
             if (domino.GetComponent<PhotonView>() != null)
             {
-                // Optionally, you can also set ownership for the boneYard if needed
-                // but typically the bone yard doesn't need this.
+                
             }
 
             boneYard.AddToBoneYard(domino);
