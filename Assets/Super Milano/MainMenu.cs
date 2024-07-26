@@ -785,7 +785,7 @@ public class MainMenu : MonoBehaviourPunCallbacks
                 //PlayerPrefs.SetInt("ai", 1);
                 //createroomforai(num);
                 Debug.Log("Ai scene loading...");
-                //SceneManager.LoadScene(5);
+                SceneManager.LoadScene(5);
             }
             else
             {
