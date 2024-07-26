@@ -127,6 +127,12 @@ public class Events_Manager : MonoBehaviour
             TournamentData tournamentData = JsonUtility.FromJson<TournamentData>(snapshot.GetRawJsonValue());
             string tournamentName = HelperClass.Decrypt(tournamentKey, playerId);
 
+            if (tournamentName == null)
+            {
+                Debug.LogError("Failed to decrypt tournament name.");
+                return;
+            }
+
             Debug.Log($"Tournament added: {tournamentName}");
 
             if (!instantiatedTournaments.ContainsKey(tournamentName))
@@ -233,10 +239,46 @@ public class Events_Manager : MonoBehaviour
         currenttour = key;
         tourr.SetActive(true);
         playersInTour++;
+
+        bool playerAlreadyJoined = false;
+        foreach (Text nameText in names16UI)
+        {
+            if (nameText.text == Photon.Pun.PhotonNetwork.NickName)
+            {
+                playerAlreadyJoined = true;
+                Debug.Log("Player already in the list.");
+                return;
+            }
+        }
+
+        if (!playerAlreadyJoined)
+        {
+            Debug.Log($"Adding player {Photon.Pun.PhotonNetwork.NickName} at index {playersInTour}");
+            if (playersInTour >= 0 && playersInTour < names16UI.Count)
+            {
+                names16UI[playersInTour].text = Photon.Pun.PhotonNetwork.NickName;
+                databaseReference.Child("tournaments").Child(key).Child("players").Child("player" + (playersInTour + 1)).SetValueAsync(Photon.Pun.PhotonNetwork.NickName).ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCompleted)
+                    {
+                        Debug.Log("Player added to tournament in the database.");
+                    }
+                    else
+                    {
+                        Debug.LogError("Failed to add player to tournament in the database.");
+                    }
+                });
+            }
+            else
+            {
+                Debug.LogError("Invalid player index or UI list is not populated correctly.");
+            }
+        }
+
         tourrName.text = HelperClass.Decrypt(key, playerId);
-        string playerName = PhotonNetwork.NickName;
-        Debug.Log("Player name: " + playerName);
-        UpdatePlayerList(key, playerName);
+        string PhotonNetwork = Photon.Pun.PhotonNetwork.NickName;
+        Debug.Log("Player name: " + PhotonNetwork);
+        UpdatePlayerList(key, PhotonNetwork);
     }
 
     private void UpdatePlayerList(string tournamentKey, string playerName)
@@ -254,18 +296,26 @@ public class Events_Manager : MonoBehaviour
 
         if (!playerAlreadyJoined)
         {
-            names16UI[playersInTour].text = playerName;
-            databaseReference.Child("tournaments").Child(tournamentKey).Child("players").Child("player" + (playersInTour + 1)).SetValueAsync(playerName).ContinueWithOnMainThread(task =>
+            Debug.Log($"Adding player {playerName} at index {playersInTour}");
+            if (playersInTour >= 0 && playersInTour < names16UI.Count)
             {
-                if (task.IsCompleted)
+                names16UI[playersInTour].text = playerName;
+                databaseReference.Child("tournaments").Child(tournamentKey).Child("players").Child("player" + (playersInTour + 1)).SetValueAsync(playerName).ContinueWithOnMainThread(task =>
                 {
-                    Debug.Log("Player added to tournament in the database.");
-                }
-                else
-                {
-                    Debug.LogError("Failed to add player to tournament in the database.");
-                }
-            });
+                    if (task.IsCompleted)
+                    {
+                        Debug.Log("Player added to tournament in the database.");
+                    }
+                    else
+                    {
+                        Debug.LogError("Failed to add player to tournament in the database.");
+                    }
+                });
+            }
+            else
+            {
+                Debug.LogError("Invalid player index or UI list is not populated correctly.");
+            }
         }
     }
 
