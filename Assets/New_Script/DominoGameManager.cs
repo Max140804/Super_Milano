@@ -12,7 +12,8 @@ using ExitGames.Client.Photon;
 public enum GameModes
 {
     OneVsOne,
-    AllFives
+    AllFives,
+    AI
 }
 
 public class DominoGameManager : MonoBehaviourPunCallbacks
@@ -24,6 +25,7 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
 
     private List<GameObject> allDominoes = new List<GameObject>();
     private List<DominoHand> players = new List<DominoHand>();
+    private List<AIPlayer> aiPlayers = new List<AIPlayer>();
     private DominoBoneYard boneYard;
 
     private DatabaseReference databaseReference;
@@ -53,6 +55,11 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
             FirebaseApp app = FirebaseApp.DefaultInstance;
             databaseReference = FirebaseDatabase.DefaultInstance.RootReference;
         });
+
+        if(gameMode == GameModes.AI)
+        {
+            InitializeAIPlayers();
+        }
     }
 
     void InitializeDominoes()
@@ -61,6 +68,19 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
         {
             GameObject domino = CreateDominoCard(card);
             allDominoes.Add(domino);
+        }
+    }
+
+    void InitializeAIPlayers()
+    {
+        foreach (var aiPlayerObject in GameObject.FindGameObjectsWithTag("AIPlayer"))
+        {
+            AIPlayer aiPlayer = aiPlayerObject.GetComponent<AIPlayer>();
+            if (aiPlayer != null)
+            {
+                aiPlayers.Add(aiPlayer);
+                players.Add(aiPlayer.GetComponent<DominoHand>());
+            }
         }
     }
 
@@ -97,7 +117,7 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
 
         int tilesPerPlayer = 7;
 
-        if (gameMode == GameModes.OneVsOne)
+        if (gameMode == GameModes.OneVsOne || gameMode == GameModes.AI)
         {
             tilesPerPlayer = 7;
         }

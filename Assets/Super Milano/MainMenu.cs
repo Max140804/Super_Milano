@@ -782,8 +782,10 @@ public class MainMenu : MonoBehaviourPunCallbacks
         {
             if (AIdomino.isOn)
             {
-                PlayerPrefs.SetInt("ai", 1);
-                createroomforai(num);
+                //PlayerPrefs.SetInt("ai", 1);
+                //createroomforai(num);
+                Debug.Log("Ai scene loading...");
+                //SceneManager.LoadScene(5);
             }
             else
             {

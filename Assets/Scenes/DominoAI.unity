@@ -1693,7 +1693,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b1e16496b5c67254cb0ed055ffa600bd, type: 2}
   spawnGB: {fileID: 1647884197}
   finalScore: 50
-  gameMode: 1
+  gameMode: 2
   isTournamentGame: 0
   InBoneyard: 0
 --- !u!222 &3636318831234157354

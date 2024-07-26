@@ -38,18 +38,9 @@ public class Events_Manager : MonoBehaviour
 
     private DatabaseReference databaseReference;
     private Dictionary<string, GameObject> instantiatedTournaments = new Dictionary<string, GameObject>();
+    private Dictionary<string, List<Text>> playerUILists = new Dictionary<string, List<Text>>();
 
     int playersInTour = -1;
-
-    public void SetTournamentType(string type)
-    {
-        tournamenttype = type;
-    }
-
-    public void SetTournamentBid(float bid)
-    {
-        tournamentbid = bid;
-    }
 
     private void Start()
     {
@@ -63,11 +54,29 @@ public class Events_Manager : MonoBehaviour
         });
     }
 
-
     private void ListenForTournamentChanges()
     {
         databaseReference.Child("tournaments").ChildAdded += HandleTournamentAdded;
+        databaseReference.Child("tournaments").ChildChanged += HandleTournamentChanged;
         databaseReference.Child("tournaments").ChildRemoved += HandleTournamentRemoved;
+    }
+
+    private void HandleTournamentChanged(object sender, ChildChangedEventArgs e)
+    {
+        if (e.DatabaseError != null)
+        {
+            Debug.LogError(e.DatabaseError.Message);
+            return;
+        }
+
+        DataSnapshot snapshot = e.Snapshot;
+        string tournamentKey = snapshot.Key;
+        string tournamentName = HelperClass.Decrypt(tournamentKey, playerId);
+
+        if (snapshot.Child("players").Exists)
+        {
+            UpdatePlayerList(tournamentKey);
+        }
     }
 
     private void LoadExistingTournaments()
@@ -102,6 +111,7 @@ public class Events_Manager : MonoBehaviour
 
                         // Add the instantiated tournament to the dictionary
                         instantiatedTournaments[tournamentName] = tournamentObject;
+                        playerUILists[tournamentName] = names16UI; // Assuming 16 player UI list for now
                     }
                     else
                     {
@@ -163,6 +173,7 @@ public class Events_Manager : MonoBehaviour
             // Instead of destroying, we can deactivate the GameObject
             instantiatedTournaments[tournamentName].SetActive(false);
             instantiatedTournaments.Remove(tournamentName);
+            playerUILists.Remove(tournamentName);
         }
     }
 
@@ -221,6 +232,7 @@ public class Events_Manager : MonoBehaviour
 
                 // Add the instantiated tournament to the dictionary
                 instantiatedTournaments[tournamentName] = tournamentObject;
+                playerUILists[tournamentName] = names16UI; // Assuming 16 player UI list for now
                 Debug.Log($"Tournament instantiated: {tournamentName}");
             }
             else
@@ -282,42 +294,28 @@ public class Events_Manager : MonoBehaviour
         UpdatePlayerList(key, PhotonNetwork);
     }
 
-    private void UpdatePlayerList(string tournamentKey, string playerName)
+    private void UpdatePlayerList(string tournamentKey, string playerName = "")
     {
-        bool playerAlreadyJoined = false;
-        foreach (Text nameText in names16UI)
+        databaseReference.Child("tournaments").Child(tournamentKey).Child("players").GetValueAsync().ContinueWithOnMainThread(task =>
         {
-            if (nameText.text == playerName)
+            if (task.IsFaulted)
             {
-                playerAlreadyJoined = true;
-                Debug.Log("Player already in the list.");
+                Debug.LogError("Failed to retrieve player list from database.");
                 return;
             }
-        }
 
-        if (!playerAlreadyJoined)
-        {
-            Debug.Log($"Adding player {playerName} at index {playersInTour}");
-            if (playersInTour >= 0 && playersInTour < names16UI.Count)
+            DataSnapshot snapshot = task.Result;
+            int index = 0;
+            foreach (DataSnapshot playerSnapshot in snapshot.Children)
             {
-                names16UI[playersInTour].text = playerName;
-                databaseReference.Child("tournaments").Child(tournamentKey).Child("players").Child("player" + (playersInTour + 1)).SetValueAsync(playerName).ContinueWithOnMainThread(task =>
+                string playerNameFromDb = playerSnapshot.Value.ToString();
+                if (index < names16UI.Count)
                 {
-                    if (task.IsCompleted)
-                    {
-                        Debug.Log("Player added to tournament in the database.");
-                    }
-                    else
-                    {
-                        Debug.LogError("Failed to add player to tournament in the database.");
-                    }
-                });
+                    names16UI[index].text = playerNameFromDb;
+                    index++;
+                }
             }
-            else
-            {
-                Debug.LogError("Invalid player index or UI list is not populated correctly.");
-            }
-        }
+        });
     }
 
     public void FinalizeTournament()
@@ -361,7 +359,6 @@ public class Events_Manager : MonoBehaviour
         }
     }
 
-
     public void DeleteTournament(string tournamentKey)
     {
         databaseReference.Child("tournaments").Child(tournamentKey).RemoveValueAsync().ContinueWithOnMainThread(task =>
@@ -374,6 +371,7 @@ public class Events_Manager : MonoBehaviour
                 {
                     instantiatedTournaments[tournamentName].SetActive(false);
                     instantiatedTournaments.Remove(tournamentName);
+                    playerUILists.Remove(tournamentName);
                 }
 
                 Debug.Log("Tournament deleted successfully");
@@ -419,10 +417,11 @@ public class Events_Manager : MonoBehaviour
             tournament.Value.SetActive(false);
         }
         instantiatedTournaments.Clear();
+        playerUILists.Clear();
         LoadExistingTournaments();
     }
-
 }
+
 
 [System.Serializable]
 public class TournamentData
