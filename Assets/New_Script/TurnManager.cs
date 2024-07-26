@@ -115,8 +115,8 @@ public class TurnManager : MonoBehaviourPunCallbacks
         if (isOfflineMode)
         {
             // Offline mode: update turn text for local player vs AI
-            string playerName = currentPlayerIndex == 0 ? "Player" : "AI";
-            turnText.text = $"It's {playerName}'s turn";
+            string playerName = currentPlayerIndex == 0 ? "Your" : "AI's";
+            turnText.text = $"It's {playerName} turn";
             Debug.Log($"It's {playerName}'s turn");
         }
         else

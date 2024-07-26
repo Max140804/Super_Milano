@@ -73,7 +73,7 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
 
     void InitializeAIPlayers()
     {
-        foreach (var aiPlayerObject in GameObject.FindGameObjectsWithTag("AIPlayer"))
+        foreach (var aiPlayerObject in GameObject.FindObjectsOfType<AIPlayer>())
         {
             AIPlayer aiPlayer = aiPlayerObject.GetComponent<AIPlayer>();
             if (aiPlayer != null)
@@ -117,13 +117,17 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
 
         int tilesPerPlayer = 7;
 
-        if (gameMode == GameModes.OneVsOne || gameMode == GameModes.AI)
+        if (gameMode == GameModes.OneVsOne)
         {
             tilesPerPlayer = 7;
         }
         else if (gameMode == GameModes.AllFives)
         {
             tilesPerPlayer = 5;
+        }
+        else if (gameMode == GameModes.AI)
+        {
+            tilesPerPlayer = 7;
         }
 
         int currentDominoIndex = 0;
