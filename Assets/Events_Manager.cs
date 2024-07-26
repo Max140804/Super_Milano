@@ -58,10 +58,11 @@ public class Events_Manager : MonoBehaviour
             FirebaseApp app = FirebaseApp.DefaultInstance;
             databaseReference = FirebaseDatabase.DefaultInstance.RootReference;
             ListenForTournamentChanges();
-            LoadExistingTournaments(); // Load existing tournaments
-            InvokeRepeating("CheckForExpiredTournaments", 0, 3600); // Check every hour
+            LoadExistingTournaments();
+            InvokeRepeating("CheckForExpiredTournaments", 0, 3600);
         });
     }
+
 
     private void ListenForTournamentChanges()
     {
@@ -415,11 +416,12 @@ public class Events_Manager : MonoBehaviour
     {
         foreach (var tournament in instantiatedTournaments)
         {
-            Destroy(tournament.Value);
+            tournament.Value.SetActive(false);
         }
         instantiatedTournaments.Clear();
         LoadExistingTournaments();
     }
+
 }
 
 [System.Serializable]
