@@ -67,7 +67,6 @@ public class Tournament : MonoBehaviour
     public void DisableEntry()
     {
         canJoin = false;
-
         Events_Manager eventsManager = GameObject.FindObjectOfType<Events_Manager>();
 
         this.transform.parent = eventsManager.currentTour.transform; 
