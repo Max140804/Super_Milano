@@ -25,7 +25,7 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
 
     private List<GameObject> allDominoes = new List<GameObject>();
     private List<DominoHand> players = new List<DominoHand>();
-    private List<AIPlayer> aiPlayers = new List<AIPlayer>();
+    private AIPlayer aiPlayer;
     private DominoBoneYard boneYard;
 
     private DatabaseReference databaseReference;
@@ -73,20 +73,22 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
 
     void InitializeAIPlayers()
     {
-        foreach (var aiPlayerObject in GameObject.FindObjectsOfType<AIPlayer>())
-        {
-            AIPlayer aiPlayer = aiPlayerObject.GetComponent<AIPlayer>();
-            if (aiPlayer != null)
-            {
-                aiPlayers.Add(aiPlayer);
-                players.Add(aiPlayer.GetComponent<DominoHand>());
-            }
-        }
+        aiPlayer = FindObjectOfType<AIPlayer>();
+        players.Add(aiPlayer.GetComponentInChildren<DominoHand>());
     }
 
     GameObject CreateDominoCard(DominoCard cardData)
     {
-        GameObject dominoInstance = Instantiate(dominoPrefab, spawnGB);
+        GameObject dominoInstance;
+
+        if (gameMode == GameModes.AI)
+        {
+            dominoInstance = Instantiate(dominoPrefab, spawnGB);
+        }
+        else
+        {
+            dominoInstance = PhotonNetwork.Instantiate(dominoPrefab.name, spawnGB.position, spawnGB.rotation);
+        }
 
         CardData cardDataComponent = dominoInstance.GetComponent<CardData>();
         if (cardDataComponent != null)
