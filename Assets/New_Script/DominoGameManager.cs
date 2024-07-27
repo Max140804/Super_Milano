@@ -79,13 +79,13 @@ public class DominoGameManager : MonoBehaviourPunCallbacks
 
     GameObject CreateDominoCard(DominoCard cardData)
     {
-        GameObject dominoInstance;
+        GameObject dominoInstance = null;
 
         if (gameMode == GameModes.AI)
         {
             dominoInstance = Instantiate(dominoPrefab, spawnGB);
         }
-        else
+        else if(gameMode == GameModes.OneVsOne)
         {
             dominoInstance = PhotonNetwork.Instantiate(dominoPrefab.name, spawnGB.position, spawnGB.rotation);
         }
