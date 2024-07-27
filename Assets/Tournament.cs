@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using Photon.Pun;
+using System.Collections;
 
 public class Tournament : MonoBehaviour
 {
@@ -8,6 +9,7 @@ public class Tournament : MonoBehaviour
     public Text typeText;
     public Text bidText;
     public Text playerstext;
+    public Text TimeRemainingTillStart;
     public Button button;
 
     public GameObject uno;
@@ -19,7 +21,9 @@ public class Tournament : MonoBehaviour
 
     public bool canJoin = true;
 
-    public void SetData(string name, string type, int players, float bid)
+    private Coroutine countdownCoroutine;
+
+    public void SetData(string name, string type, int players, float bid, float time)
     {
         nameText.text = name;
 
@@ -45,6 +49,39 @@ public class Tournament : MonoBehaviour
 
         button.onClick.RemoveAllListeners();
         button.onClick.AddListener(OnClickJoin);
+
+        // Start the countdown
+        StartCountdown(time);
+    }
+
+    private void StartCountdown(float time)
+    {
+        // Stop any existing countdown coroutine
+        if (countdownCoroutine != null)
+        {
+            StopCoroutine(countdownCoroutine);
+        }
+
+        countdownCoroutine = StartCoroutine(CountdownCoroutine(time));
+    }
+
+    private IEnumerator CountdownCoroutine(float time)
+    {
+        float startTime = Time.time;
+        float endTime = startTime + time;
+
+        while (Time.time < endTime)
+        {
+            float remainingTime = endTime - Time.time;
+            int minutes = Mathf.FloorToInt(remainingTime / 60);
+            int seconds = Mathf.FloorToInt(remainingTime % 60);
+            TimeRemainingTillStart.text = "Starts in: " + string.Format("{0:D2}:{1:D2}", minutes, seconds);
+
+            yield return new WaitForSeconds(1f);
+        }
+
+        TimeRemainingTillStart.text = "Tournament Started!";
+        button.interactable = false;
     }
 
     public void OnClickJoin()
@@ -69,6 +106,14 @@ public class Tournament : MonoBehaviour
         canJoin = false;
         Events_Manager eventsManager = GameObject.FindObjectOfType<Events_Manager>();
 
-        this.transform.parent = eventsManager.currentTour.transform; 
+        this.transform.parent = eventsManager.currentTour.transform;
+    }
+
+    private void OnDestroy()
+    {
+        if (countdownCoroutine != null)
+        {
+            StopCoroutine(countdownCoroutine);
+        }
     }
 }

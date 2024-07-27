@@ -42,6 +42,19 @@ public class Events_Manager : MonoBehaviour
 
     int playersInTour = -1;
 
+
+    public float matchStartDelay = 1800f;
+
+
+    public void SetBid(float bid)
+    {
+        tournamentbid = bid;
+    }
+    public void SetType(string type)
+    {
+        tournamenttype = type;
+    }
+
     private void Start()
     {
         FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
@@ -107,7 +120,7 @@ public class Events_Manager : MonoBehaviour
                     Tournament tournamentComponent = tournamentObject.GetComponent<Tournament>();
                     if (tournamentComponent != null)
                     {
-                        tournamentComponent.SetData(tournamentName, tournamentData.type, tournamentData.players, tournamentData.bid);
+                        tournamentComponent.SetData(tournamentName, tournamentData.type, tournamentData.players, tournamentData.bid, tournamentData.timeRemaining);
 
                         // Add the instantiated tournament to the dictionary
                         instantiatedTournaments[tournamentName] = tournamentObject;
@@ -187,13 +200,15 @@ public class Events_Manager : MonoBehaviour
         }
 
         string key = HelperClass.Encrypt(tournamentname.text, playerId);
+        long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var newTournamentData = new TournamentData
         {
-            name = tournamentname.text, // Store the original name
+            name = tournamentname.text,
             type = tournamenttype,
             players = 16,
             bid = tournamentbid,
-            createdAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            createdAt = currentTime,
+            timeRemaining = matchStartDelay
         };
         string json = JsonUtility.ToJson(newTournamentData);
 
@@ -203,6 +218,8 @@ public class Events_Manager : MonoBehaviour
             {
                 Debug.Log("Tournament created successfully.");
                 InstantiateTournamentPrefab(key, newTournamentData);
+
+                StartCoroutine(StartMatchDelay(key, newTournamentData.timeRemaining));
 
                 tourr.SetActive(true);
                 tourrName.text = tournamentname.text;
@@ -228,7 +245,7 @@ public class Events_Manager : MonoBehaviour
             Tournament tournamentComponent = tournamentObject.GetComponent<Tournament>();
             if (tournamentComponent != null)
             {
-                tournamentComponent.SetData(tournamentName, tournamentData.type, tournamentData.players, tournamentData.bid);
+                tournamentComponent.SetData(tournamentName, tournamentData.type, tournamentData.players, tournamentData.bid, tournamentData.timeRemaining);
 
                 // Add the instantiated tournament to the dictionary
                 instantiatedTournaments[tournamentName] = tournamentObject;
@@ -245,6 +262,7 @@ public class Events_Manager : MonoBehaviour
             Debug.LogWarning("Tournament already instantiated: " + tournamentName);
         }
     }
+
 
     public void Join(string key)
     {
@@ -420,7 +438,22 @@ public class Events_Manager : MonoBehaviour
         playerUILists.Clear();
         LoadExistingTournaments();
     }
+
+    IEnumerator StartMatchDelay(string key, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        StartMatch(key);
+    }
+
+    private void StartMatch(string tournamentKey)
+    {
+        // Here you can implement the logic to start the match
+        // For example, notify players, initialize match settings, etc.
+
+        Debug.Log($"Match for tournament {tournamentKey} is starting now.");
+    }
 }
+
 
 
 [System.Serializable]
@@ -431,4 +464,5 @@ public class TournamentData
     public int players;
     public float bid;
     public long createdAt;
+    public float timeRemaining;
 }
