@@ -42,9 +42,7 @@ public class Events_Manager : MonoBehaviour
 
     int playersInTour = -1;
 
-
     public float matchStartDelay = 1800f;
-
 
     public void SetBid(float bid)
     {
@@ -64,6 +62,48 @@ public class Events_Manager : MonoBehaviour
             ListenForTournamentChanges();
             LoadExistingTournaments();
             InvokeRepeating("CheckForExpiredTournaments", 0, 3600);
+            InvokeRepeating("UpdateTournamentTimes", 0, 30);
+        });
+    }
+
+    private void UpdateTournamentTimes()
+    {
+        databaseReference.Child("tournaments").GetValueAsync().ContinueWithOnMainThread(task =>
+        {
+            if (task.IsFaulted)
+            {
+                Debug.LogError("Failed to retrieve tournaments from database.");
+                return;
+            }
+
+            DataSnapshot snapshot = task.Result;
+            long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+            foreach (DataSnapshot tournamentSnapshot in snapshot.Children)
+            {
+                TournamentData tournamentData = JsonUtility.FromJson<TournamentData>(tournamentSnapshot.GetRawJsonValue());
+                long createdAt = tournamentData.createdAt;
+                long matchStartTime = createdAt;
+                long timeRemaining = matchStartTime - currentTime;
+                if (timeRemaining < 0) timeRemaining = 0;
+
+                if (tournamentData.timeRemaining != timeRemaining)
+                {
+                    tournamentData.timeRemaining = timeRemaining;
+                    string updatedJson = JsonUtility.ToJson(tournamentData);
+                    databaseReference.Child("tournaments").Child(tournamentSnapshot.Key).SetRawJsonValueAsync(updatedJson).ContinueWithOnMainThread(updateTask =>
+                    {
+                        if (updateTask.IsCompleted)
+                        {
+                            Debug.Log("Tournament time remaining updated successfully.");
+                        }
+                        else
+                        {
+                            Debug.LogError("Failed to update tournament time remaining in the database.");
+                        }
+                    });
+                }
+            }
         });
     }
 
@@ -124,7 +164,6 @@ public class Events_Manager : MonoBehaviour
 
                         // Add the instantiated tournament to the dictionary
                         instantiatedTournaments[tournamentName] = tournamentObject;
-                        playerUILists[tournamentName] = names16UI; // Assuming 16 player UI list for now
                     }
                     else
                     {
@@ -233,7 +272,6 @@ public class Events_Manager : MonoBehaviour
 
     private void InstantiateTournamentPrefab(string key, TournamentData tournamentData)
     {
-        // Check if the tournament has already been instantiated
         string tournamentName = HelperClass.Decrypt(key, playerId);
         if (!instantiatedTournaments.ContainsKey(tournamentName))
         {
@@ -241,7 +279,6 @@ public class Events_Manager : MonoBehaviour
 
             // Instantiate the tournament prefab and set data
             GameObject tournamentObject = Instantiate(tournamentPref, content.transform);
-            tournamentObject.transform.parent = content.transform;
             Tournament tournamentComponent = tournamentObject.GetComponent<Tournament>();
             if (tournamentComponent != null)
             {
@@ -262,7 +299,6 @@ public class Events_Manager : MonoBehaviour
             Debug.LogWarning("Tournament already instantiated: " + tournamentName);
         }
     }
-
 
     public void Join(string key)
     {
@@ -307,9 +343,7 @@ public class Events_Manager : MonoBehaviour
         }
 
         tourrName.text = HelperClass.Decrypt(key, playerId);
-        string PhotonNetwork = Photon.Pun.PhotonNetwork.NickName;
-        Debug.Log("Player name: " + PhotonNetwork);
-        UpdatePlayerList(key, PhotonNetwork);
+        UpdatePlayerList(key);
     }
 
     private void UpdatePlayerList(string tournamentKey, string playerName = "")
@@ -418,7 +452,6 @@ public class Events_Manager : MonoBehaviour
             {
                 TournamentData tournamentData = JsonUtility.FromJson<TournamentData>(tournamentSnapshot.GetRawJsonValue());
                 long createdAt = tournamentData.createdAt;
-
                 if (currentTime - createdAt > 1800)
                 {
                     string tournamentKey = tournamentSnapshot.Key;
@@ -435,7 +468,7 @@ public class Events_Manager : MonoBehaviour
             tournament.Value.SetActive(false);
         }
         instantiatedTournaments.Clear();
-        playerUILists.Clear();
+       // playerUILists.Clear();
         LoadExistingTournaments();
     }
 
@@ -453,8 +486,6 @@ public class Events_Manager : MonoBehaviour
         Debug.Log($"Match for tournament {tournamentKey} is starting now.");
     }
 }
-
-
 
 [System.Serializable]
 public class TournamentData

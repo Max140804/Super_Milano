@@ -22,6 +22,7 @@ public class Tournament : MonoBehaviour
     public bool canJoin = true;
 
     private Coroutine countdownCoroutine;
+    private float countdownTime; // Track the remaining time
 
     public void SetData(string name, string type, int players, float bid, float time)
     {
@@ -50,25 +51,27 @@ public class Tournament : MonoBehaviour
         button.onClick.RemoveAllListeners();
         button.onClick.AddListener(OnClickJoin);
 
-        // Start the countdown
-        StartCountdown(time);
+        // Update the countdown timer
+        UpdateCountdown(time);
     }
 
-    private void StartCountdown(float time)
+    private void UpdateCountdown(float time)
     {
+        countdownTime = time;
+
         // Stop any existing countdown coroutine
         if (countdownCoroutine != null)
         {
             StopCoroutine(countdownCoroutine);
         }
 
-        countdownCoroutine = StartCoroutine(CountdownCoroutine(time));
+        countdownCoroutine = StartCoroutine(CountdownCoroutine());
     }
 
-    private IEnumerator CountdownCoroutine(float time)
+    private IEnumerator CountdownCoroutine()
     {
         float startTime = Time.time;
-        float endTime = startTime + time;
+        float endTime = startTime + countdownTime;
 
         while (Time.time < endTime)
         {
