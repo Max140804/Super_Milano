@@ -465,7 +465,7 @@ public class Events_Manager : MonoBehaviour
     {
         foreach (var tournament in instantiatedTournaments)
         {
-            tournament.Value.SetActive(false);
+            Destroy(tournament.Value);
         }
         instantiatedTournaments.Clear();
        // playerUILists.Clear();
