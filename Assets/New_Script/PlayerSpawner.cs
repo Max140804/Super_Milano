@@ -2,7 +2,7 @@ using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
 using System.Collections;
-using ExitGames.Client.Photon;
+using System.Collections.Generic;
 
 public class PlayerSpawner : MonoBehaviourPunCallbacks
 {
@@ -10,76 +10,77 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
     public Transform spawnPointDown;
     public Transform spawnPointUp;
 
+    private Dictionary<int, GameObject> playerInstances = new Dictionary<int, GameObject>();
+
     private void Start()
     {
-        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
+        if (PhotonNetwork.IsConnected)
         {
-            if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerSpawned", out object isPlayerSpawned) && (bool)isPlayerSpawned)
+            StartCoroutine(SpawnExistingPlayers());
+        }
+    }
+
+    private IEnumerator SpawnExistingPlayers()
+    {
+        // Delay to ensure scene has fully loaded
+        yield return new WaitForSeconds(1f);
+
+        foreach (Player player in PhotonNetwork.PlayerList)
+        {
+            SpawnPlayerFor(player);
+        }
+    }
+
+    private void SpawnPlayerFor(Player player)
+    {
+        Transform spawnPoint = player.IsLocal ? spawnPointDown : spawnPointUp;
+
+        if (player.TagObject == null)
+        {
+            GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
+
+            // Preserve original scale
+            Vector3 originalScale = instance.transform.localScale;
+
+            // Set parent and reset scale
+            instance.transform.SetParent(spawnPoint);
+            instance.transform.localScale = originalScale;
+
+            player.TagObject = instance;
+            playerInstances[player.ActorNumber] = instance;
+
+            PhotonView photonView = instance.GetComponent<PhotonView>();
+            if (photonView != null && player.IsLocal)
             {
-                // Player is already spawned
-                return;
+                photonView.RPC("SetPlayerName", RpcTarget.AllBuffered, PhotonNetwork.NickName);
             }
 
-            SpawnPlayer();
+            Debug.Log("Player prefab instantiated and parented: " + instance.name);
         }
-    }
-
-    private void SpawnPlayer()
-    {
-        StartCoroutine(SpawnPlayerCoroutine());
-    }
-
-    private IEnumerator SpawnPlayerCoroutine()
-    {
-        // Get the local player's spawn point
-        Transform spawnPoint = PhotonNetwork.LocalPlayer.IsMasterClient ? spawnPointDown : spawnPointUp;
-
-        GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
-
-        yield return null;
-
-        instance.transform.SetParent(spawnPoint);
-        instance.transform.localScale = playerPrefab.transform.localScale;
-        PhotonView photonView = instance.GetComponent<PhotonView>();
-        if (photonView != null)
+        else
         {
-            photonView.RPC("SetPlayerName", RpcTarget.AllBuffered, PhotonNetwork.NickName);
+            // Ensure the existing instance is parented correctly
+            GameObject instance = (GameObject)player.TagObject;
+            instance.transform.SetParent(spawnPoint);
+            instance.transform.localPosition = Vector3.zero; // Adjust if necessary
+
+            Debug.Log("Player prefab already exists, re-parented: " + instance.name);
         }
-
-        ExitGames.Client.Photon.Hashtable playerProperties = new ExitGames.Client.Photon.Hashtable { { "PlayerSpawned", true } };
-        PhotonNetwork.LocalPlayer.SetCustomProperties(playerProperties);
-
-        Debug.Log("Player prefab instantiated and parented: " + instance.name);
     }
 
     public override void OnJoinedRoom()
     {
-        if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerSpawned", out object isPlayerSpawned) && (bool)isPlayerSpawned)
+        if (!playerInstances.ContainsKey(PhotonNetwork.LocalPlayer.ActorNumber))
         {
-            return;
+            SpawnPlayerFor(PhotonNetwork.LocalPlayer);
         }
-
-        SpawnPlayer();
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
-        if (!PhotonNetwork.IsMasterClient)
+        if (!playerInstances.ContainsKey(newPlayer.ActorNumber))
         {
-            return;
+            SpawnPlayerFor(newPlayer);
         }
-
-        if (newPlayer.CustomProperties.TryGetValue("PlayerSpawned", out object isPlayerSpawned) && (bool)isPlayerSpawned)
-        {
-            return;
-        }
-
-        photonView.RPC("RequestPlayerSpawn", newPlayer);
-    }
-
-    [PunRPC]
-    private void RequestPlayerSpawn()
-    {
-        SpawnPlayer();
     }
 }
