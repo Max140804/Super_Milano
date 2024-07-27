@@ -23,8 +23,9 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
         }
 
         GameObject playerToSpawn = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, spawnPoint.rotation);
-        playerToSpawn.transform.localScale = playerToSpawn.transform.localScale;
         playerToSpawn.transform.parent = spawnPoint;
+        playerToSpawn.transform.localScale = playerPrefab.transform.localScale;
+       
 
     }
 }
