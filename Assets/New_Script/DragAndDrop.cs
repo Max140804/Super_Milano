@@ -38,6 +38,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         turn = FindObjectOfType<TurnManager>();
         cardData = GetComponent<CardData>();
         visibilityManager = GetComponent<CardVisibilityManager>();
+        photonView = GetComponent<PhotonView>();
     }
 
     private void Start()
@@ -54,8 +55,6 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
     private void Update()
     {
-        photonView = GetComponentInParent<PhotonView>();
-
         if (!photonView.IsMine)
         {
             rectTransform.position = Vector3.Lerp(rectTransform.position, networkPosition, Time.deltaTime * 10);
@@ -237,6 +236,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
     private void ResetPosition()
     {
+        rectTransform.SetParent(originalParent);
         rectTransform.anchoredPosition = Vector3.zero;
     }
 
