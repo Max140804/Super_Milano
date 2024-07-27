@@ -17,8 +17,8 @@ public class DominoHand : MonoBehaviourPun
         domino.transform.localRotation = Quaternion.identity;
         domino.transform.localScale = Vector3.one;
         ToggleAddButton(domino, false);
-
-        PhotonView photonView = GetComponent<PhotonView>();
+      
+        PhotonView photonView = GetComponentInParent<PhotonView>();
         if (photonView != null)
         {
             photonView.TransferOwnership(PhotonNetwork.LocalPlayer);
@@ -27,6 +27,8 @@ public class DominoHand : MonoBehaviourPun
         {
             
         }
+
+        DominoHandMirror.Instance.AddToHand(PhotonNetwork.LocalPlayer.ActorNumber, domino);
     }
 
     public bool RemoveFromHand(GameObject domino)
@@ -34,6 +36,7 @@ public class DominoHand : MonoBehaviourPun
         if (hand.Contains(domino))
         {
             hand.Remove(domino);
+            bool removed = DominoHandMirror.Instance.RemoveFromHand(PhotonNetwork.LocalPlayer.ActorNumber, domino);
             /*PhotonView dominoPhotonView = domino.GetComponent<PhotonView>();
             if (dominoPhotonView != null)
             {

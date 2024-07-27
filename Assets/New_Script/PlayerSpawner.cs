@@ -2,6 +2,7 @@ using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
 using System.Collections;
+using ExitGames.Client.Photon;
 
 public class PlayerSpawner : MonoBehaviourPunCallbacks
 {
@@ -11,8 +12,14 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
 
     private void Start()
     {
-        if (PhotonNetwork.IsConnected)
+        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
         {
+            if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerSpawned", out object isPlayerSpawned) && (bool)isPlayerSpawned)
+            {
+                // Player is already spawned
+                return;
+            }
+
             SpawnPlayer();
         }
     }
@@ -24,30 +31,34 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
 
     private IEnumerator SpawnPlayerCoroutine()
     {
-        foreach (Player player in PhotonNetwork.PlayerList)
+        // Get the local player's spawn point
+        Transform spawnPoint = PhotonNetwork.LocalPlayer.IsMasterClient ? spawnPointDown : spawnPointUp;
+
+        GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
+
+        yield return null;
+
+        instance.transform.SetParent(spawnPoint);
+        instance.transform.localScale = playerPrefab.transform.localScale;
+        PhotonView photonView = instance.GetComponent<PhotonView>();
+        if (photonView != null)
         {
-            Transform spawnPoint = player == PhotonNetwork.LocalPlayer ? spawnPointDown : spawnPointUp;
-            GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
-            // Wait until the next frame
-            yield return null;
-
-            // Set the parent after instantiation
-            instance.transform.SetParent(spawnPoint);
-            instance.transform.localScale = playerPrefab.transform.localScale;
-            PhotonView photonView = instance.GetComponent<PhotonView>();
-            if (photonView != null)
-            {
-                photonView.RPC("SetPlayerName", RpcTarget.AllBuffered, PhotonNetwork.NickName);
-            }
-
-            Debug.Log("Player prefab instantiated and parented: " + instance.name);
-
+            photonView.RPC("SetPlayerName", RpcTarget.AllBuffered, PhotonNetwork.NickName);
         }
-      
+
+        ExitGames.Client.Photon.Hashtable playerProperties = new ExitGames.Client.Photon.Hashtable { { "PlayerSpawned", true } };
+        PhotonNetwork.LocalPlayer.SetCustomProperties(playerProperties);
+
+        Debug.Log("Player prefab instantiated and parented: " + instance.name);
     }
 
     public override void OnJoinedRoom()
     {
+        if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerSpawned", out object isPlayerSpawned) && (bool)isPlayerSpawned)
+        {
+            return;
+        }
+
         SpawnPlayer();
     }
 
@@ -55,7 +66,20 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
     {
         if (!PhotonNetwork.IsMasterClient)
         {
-            SpawnPlayer();
+            return;
         }
+
+        if (newPlayer.CustomProperties.TryGetValue("PlayerSpawned", out object isPlayerSpawned) && (bool)isPlayerSpawned)
+        {
+            return;
+        }
+
+        photonView.RPC("RequestPlayerSpawn", newPlayer);
+    }
+
+    [PunRPC]
+    private void RequestPlayerSpawn()
+    {
+        SpawnPlayer();
     }
 }

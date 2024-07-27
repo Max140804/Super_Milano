@@ -120,6 +120,8 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
                     SnapToCells(cellIndex);
                     SetCellValues(cellObject);
                     visibilityManager.opponentCardImage.SetActive(false);
+
+                    DominoHandMirror.Instance.UpdateCardPosition(photonView.ViewID, rectTransform.position, rectTransform.rotation, cellIndex);
                 }
                 else
                 {
