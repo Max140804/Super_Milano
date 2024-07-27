@@ -1,7 +1,7 @@
 using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
-using System.Collections.Generic;
+using System.Collections;
 
 public class PlayerSpawner : MonoBehaviourPunCallbacks
 {
@@ -9,53 +9,53 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
     public Transform spawnPointDown;
     public Transform spawnPointUp;
 
-    private Dictionary<int, GameObject> spawnedPlayers = new Dictionary<int, GameObject>();
-
     private void Start()
     {
-        // Spawn existing players at the start
-        SpawnAllPlayers();
+        if (PhotonNetwork.IsConnected)
+        {
+            SpawnPlayer();
+        }
+    }
+
+    private void SpawnPlayer()
+    {
+        StartCoroutine(SpawnPlayerCoroutine());
+    }
+
+    private IEnumerator SpawnPlayerCoroutine()
+    {
+        foreach (Player player in PhotonNetwork.PlayerList)
+        {
+            Transform spawnPoint = player == PhotonNetwork.LocalPlayer ? spawnPointDown : spawnPointUp;
+            GameObject instance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, Quaternion.identity);
+            // Wait until the next frame
+            yield return null;
+
+            // Set the parent after instantiation
+            instance.transform.SetParent(spawnPoint);
+            instance.transform.localScale = playerPrefab.transform.localScale;
+            PhotonView photonView = instance.GetComponent<PhotonView>();
+            if (photonView != null)
+            {
+                photonView.RPC("SetPlayerName", RpcTarget.AllBuffered, PhotonNetwork.NickName);
+            }
+
+            Debug.Log("Player prefab instantiated and parented: " + instance.name);
+
+        }
+      
+    }
+
+    public override void OnJoinedRoom()
+    {
+        SpawnPlayer();
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
-        // Spawn the newly joined player
-        SpawnPlayer(newPlayer);
-    }
-
-    public override void OnPlayerLeftRoom(Player otherPlayer)
-    {
-        // Remove the player who left
-        if (spawnedPlayers.ContainsKey(otherPlayer.ActorNumber))
+        if (!PhotonNetwork.IsMasterClient)
         {
-            Destroy(spawnedPlayers[otherPlayer.ActorNumber]);
-            spawnedPlayers.Remove(otherPlayer.ActorNumber);
+            SpawnPlayer();
         }
-    }
-
-    private void SpawnAllPlayers()
-    {
-        foreach (Player player in PhotonNetwork.PlayerList)
-        {
-            SpawnPlayer(player);
-        }
-    }
-
-    private void SpawnPlayer(Player player)
-    {
-        if (spawnedPlayers.ContainsKey(player.ActorNumber))
-        {
-            // Player is already spawned
-            return;
-        }
-
-        Transform spawnPoint = player == PhotonNetwork.LocalPlayer ? spawnPointDown : spawnPointUp;
-
-        GameObject playerToSpawn = PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, spawnPoint.rotation);
-        playerToSpawn.transform.SetParent(spawnPoint, false);
-        playerToSpawn.transform.localPosition = Vector3.zero;
-        playerToSpawn.transform.localScale = playerPrefab.transform.localScale;
-
-        spawnedPlayers[player.ActorNumber] = playerToSpawn;
     }
 }
