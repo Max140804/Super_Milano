@@ -18,37 +18,30 @@ public class DominoHand : MonoBehaviourPun
         domino.transform.localScale = Vector3.one;
         ToggleAddButton(domino, false);
 
-        PhotonView photonView = GetComponentInParent<PhotonView>();
+        PhotonView photonView = GetComponent<PhotonView>();
         if (photonView != null)
         {
             photonView.TransferOwnership(PhotonNetwork.LocalPlayer);
         }
         else
         {
-            Debug.LogWarning("AddToHand: PhotonView is null.");
+
         }
     }
 
     public bool RemoveFromHand(GameObject domino)
     {
-        if (domino == null)
-        {
-            Debug.LogError("RemoveFromHand: Domino is null.");
-            return false;
-        }
-
         if (hand.Contains(domino))
         {
             hand.Remove(domino);
-            domino.transform.SetParent(null);
+            /*PhotonView dominoPhotonView = domino.GetComponent<PhotonView>();
+            if (dominoPhotonView != null)
+            {
+                dominoPhotonView.TransferOwnership(0);
+            }*/
             CheckForGameOver();
             return true;
         }
-        else
-        {
-            Debug.LogError("RemoveFromHand: Domino not found in hand.");
-        }
-
         return false;
     }
 
