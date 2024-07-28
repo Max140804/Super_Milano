@@ -55,14 +55,8 @@ public class DominoHand : MonoBehaviourPun
                 return false;
             }
 
-            bool removed = DominoHandMirror.Instance.RemoveFromHand(PhotonNetwork.LocalPlayer.ActorNumber, domino);
-            Debug.Log($"Domino removed from hand: {removed}");
-
-            /*PhotonView dominoPhotonView = domino.GetComponent<PhotonView>();
-            if (dominoPhotonView != null)
-            {
-                dominoPhotonView.TransferOwnership(0);
-            }*/
+            DominoHandMirror.Instance.RemoveFromHand(PhotonNetwork.LocalPlayer.ActorNumber, domino);
+            //Debug.Log($"Domino removed from hand: {removed}");
 
             CheckForGameOver();
             return true;

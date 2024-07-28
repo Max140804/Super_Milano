@@ -1252,10 +1252,7 @@ public class MainMenu : MonoBehaviourPunCallbacks
 
     public void OnClickPlayByMaster()
     {
-        if (PhotonNetwork.IsMasterClient)
-        {
-            photonView.RPC("LoadScene", RpcTarget.All, gameNumber);
-        }
+        PhotonNetwork.LoadLevel(gameNumber);
     }
 
     [PunRPC]
