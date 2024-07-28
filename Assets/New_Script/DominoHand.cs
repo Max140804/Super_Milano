@@ -33,20 +33,48 @@ public class DominoHand : MonoBehaviourPun
 
     public bool RemoveFromHand(GameObject domino)
     {
+        if (domino == null)
+        {
+            Debug.LogError("Domino is null.");
+            return false;
+        }
+
+        if (hand == null)
+        {
+            Debug.LogError("Hand is null.");
+            return false;
+        }
+
         if (hand.Contains(domino))
         {
             hand.Remove(domino);
+
+            if (DominoHandMirror.Instance == null)
+            {
+                Debug.LogError("DominoHandMirror.Instance is null.");
+                return false;
+            }
+
             bool removed = DominoHandMirror.Instance.RemoveFromHand(PhotonNetwork.LocalPlayer.ActorNumber, domino);
+            Debug.Log($"Domino removed from hand: {removed}");
+
             /*PhotonView dominoPhotonView = domino.GetComponent<PhotonView>();
             if (dominoPhotonView != null)
             {
                 dominoPhotonView.TransferOwnership(0);
             }*/
+
             CheckForGameOver();
             return true;
         }
+        else
+        {
+            Debug.LogError("Domino not found in hand.");
+        }
+
         return false;
     }
+
 
     public bool Contains(GameObject domino)
     {
