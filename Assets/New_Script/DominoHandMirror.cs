@@ -48,7 +48,13 @@ public class DominoHandMirror : MonoBehaviourPun
     [PunRPC]
     public void RPC_AddToHand(int playerID, int dominoViewID)
     {
-        GameObject domino = PhotonView.Find(dominoViewID).gameObject;
+        GameObject domino = PhotonView.Find(dominoViewID)?.gameObject;
+        if (domino == null)
+        {
+            Debug.LogError($"RPC_AddToHand: Domino with ViewID {dominoViewID} not found.");
+            return;
+        }
+
         if (!playerHands.ContainsKey(playerID))
         {
             playerHands[playerID] = new List<GameObject>();
@@ -65,6 +71,12 @@ public class DominoHandMirror : MonoBehaviourPun
 
     public bool RemoveFromHand(int playerID, GameObject domino)
     {
+        if (domino == null)
+        {
+            Debug.LogError("RemoveFromHand: Domino is null.");
+            return false;
+        }
+
         if (playerHands.ContainsKey(playerID) && playerHands[playerID].Contains(domino))
         {
             playerHands[playerID].Remove(domino);
@@ -78,19 +90,33 @@ public class DominoHandMirror : MonoBehaviourPun
             Debug.Log($"Removed domino with ViewID {domino.GetComponent<PhotonView>().ViewID} from player {playerID}'s hand.");
             return true;
         }
+        else
+        {
+            Debug.LogError($"RemoveFromHand: Player {playerID} does not have the specified domino.");
+        }
         return false;
     }
 
     [PunRPC]
     public void RPC_RemoveFromHand(int playerID, int dominoViewID)
     {
-        GameObject domino = PhotonView.Find(dominoViewID).gameObject;
+        GameObject domino = PhotonView.Find(dominoViewID)?.gameObject;
+        if (domino == null)
+        {
+            Debug.LogError($"RPC_RemoveFromHand: Domino with ViewID {dominoViewID} not found.");
+            return;
+        }
+
         if (playerHands.ContainsKey(playerID) && playerHands[playerID].Contains(domino))
         {
             playerHands[playerID].Remove(domino);
             domino.transform.SetParent(null);
 
             Debug.Log($"RPC_RemoveFromHand: Domino with ViewID {dominoViewID} removed from player {playerID}'s hand.");
+        }
+        else
+        {
+            Debug.LogError($"RPC_RemoveFromHand: Player {playerID} does not have the specified domino.");
         }
     }
 
@@ -103,7 +129,13 @@ public class DominoHandMirror : MonoBehaviourPun
     [PunRPC]
     public void RPC_UpdateCardPosition(int dominoViewID, Vector3 position, Quaternion rotation, Vector2Int cellIndex)
     {
-        GameObject domino = PhotonView.Find(dominoViewID).gameObject;
+        GameObject domino = PhotonView.Find(dominoViewID)?.gameObject;
+        if (domino == null)
+        {
+            Debug.LogError($"RPC_UpdateCardPosition: Domino with ViewID {dominoViewID} not found.");
+            return;
+        }
+
         domino.transform.position = position;
         domino.transform.rotation = rotation;
 
