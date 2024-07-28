@@ -1,9 +1,7 @@
-using Photon.Pun;
 using UnityEngine;
-using System.Collections.Generic;
 using UnityEngine.EventSystems;
 
-public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPunObservable
+public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     private RectTransform rectTransform;
     private Canvas canvas;
@@ -13,21 +11,13 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     private Transform originalParent;
     private DominoHand originalHand;
     private DominoBoneYard originalBoneYard;
-    public bool isBottomHalf;
+
     private Vector3 offset;
-    private PhotonView photonView;
 
     public RectTransform topHalf;
     public RectTransform bottomHalf;
     private int topValue;
     private int bottomValue;
-    public CardVisibilityManager visibilityManager;
-    TurnManager turn;
-    Status statusText;
-
-    private Vector3 networkPosition;
-    private Quaternion networkRotation;
-    public bool isMine;
 
     private void Awake()
     {
@@ -35,38 +25,20 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         canvas = FindObjectOfType<Canvas>();
         canvasGroup = GetComponent<CanvasGroup>();
         grid = FindObjectOfType<Grid>();
-        turn = FindObjectOfType<TurnManager>();
         cardData = GetComponent<CardData>();
-        visibilityManager = GetComponent<CardVisibilityManager>();
-        photonView = GetComponent<PhotonView>();
     }
 
     private void Start()
     {
         topValue = cardData.topValue;
         bottomValue = cardData.bottomValue;
-
-        if (!photonView.IsMine)
-        {
-            networkPosition = rectTransform.position;
-            networkRotation = rectTransform.rotation;
-        }
-    }
-
-    private void Update()
-    {
-        if (!photonView.IsMine)
-        {
-            rectTransform.position = Vector3.Lerp(rectTransform.position, networkPosition, Time.deltaTime * 10);
-            rectTransform.rotation = Quaternion.Lerp(rectTransform.rotation, networkRotation, Time.deltaTime * 10);
-        }
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (!photonView.IsMine || !turn.IsMyTurn())
+        if (!TurnManager.Instance.IsMyTurn())
         {
-            statusText.UpdateStatusText("Not your turn");
+            Debug.Log("Not your turn!");
             return;
         }
 
@@ -84,7 +56,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (!photonView.IsMine || !turn.IsMyTurn())
+        if (!TurnManager.Instance.IsMyTurn())
         {
             return;
         }
@@ -96,7 +68,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (!photonView.IsMine || !turn.IsMyTurn())
+        if (!TurnManager.Instance.IsMyTurn())
         {
             return;
         }
@@ -118,9 +90,6 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
                 {
                     SnapToCells(cellIndex);
                     SetCellValues(cellObject);
-                    visibilityManager.opponentCardImage.SetActive(false);
-
-                    DominoHandMirror.Instance.UpdateCardPosition(photonView.ViewID, rectTransform.position, rectTransform.rotation, cellIndex);
                 }
                 else
                 {
@@ -135,9 +104,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
             Debug.Log("No collider hit.");
         }
 
-        photonView.RPC("UpdatePositionAndRotation", RpcTarget.All, rectTransform.position, rectTransform.rotation);
-
-        turn.EndTurn();
+        TurnManager.Instance.EndTurn();
     }
 
     private bool CanSnapToCell(Vector2Int cellIndex, int halfValue, bool isTopHalf)
@@ -163,6 +130,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         if (canSnapTop && canSnapBottom)
         {
             SnapToCell(topHalf, topHalfCellIndex);
+            SnapToCell(rectTransform, topHalfCellIndex, new Vector3(0, -15, 0));
             if (!cardData.isRotated)
             {
                 SnapToCell(rectTransform, topHalfCellIndex, new Vector3(0, -15, 0));
@@ -192,8 +160,7 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         else
         {
             ResetPosition();
-            statusText = FindAnyObjectByType<Status>();
-            statusText.UpdateStatusText("The card provided does not match any of the previously placed cards, try changing cards or rotating the one you have already.");
+            Debug.Log("Cannot snap both halves to valid cells.");
         }
     }
 
@@ -223,20 +190,21 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
         if (cell != null)
         {
-            if (isBottomHalf)
+            if (cell.transform.Find("Image"))
             {
                 cell.cellValue = bottomValue;
+                Debug.Log($"Set cell {cellObject.name} bottom value to {bottomValue}");
             }
-            else if (!isBottomHalf)
+            else if (cell.transform.Find("Image_1"))
             {
                 cell.cellValue = topHalf.GetComponent<GetValue>().topValue;
+                Debug.Log($"Set cell {cellObject.name} top value to {topValue}");
             }
         }
     }
 
     private void ResetPosition()
     {
-        rectTransform.SetParent(originalParent);
         rectTransform.anchoredPosition = Vector3.zero;
     }
 
@@ -244,51 +212,5 @@ public class DragAndDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     {
         Vector2Int currentCellIndex = grid.GetCellIndexFromPosition(rectTransform.position);
         SnapToCells(currentCellIndex);
-    }
-
-    [PunRPC]
-    private void DistributeCardPositions()
-    {
-        DominoHand[] allPlayers = FindObjectsOfType<DominoHand>();
-
-        foreach (DominoHand player in allPlayers)
-        {
-            List<GameObject> playerDominoes = player.GetDominoesInHand();
-
-            for (int i = 0; i < playerDominoes.Count; i++)
-            {
-                GameObject domino = playerDominoes[i];
-                domino.transform.localPosition = GetPositionForDomino(player, i);
-            }
-        }
-    }
-
-    private Vector3 GetPositionForDomino(DominoHand player, int index)
-    {
-        float spacing = 1.5f;
-        return new Vector3(index * spacing, 0, 0); // Distribute horizontally
-    }
-
-    [PunRPC]
-    private void UpdatePositionAndRotation(Vector3 newPosition, Quaternion newRotation)
-    {
-        rectTransform.position = newPosition;
-        rectTransform.rotation = newRotation;
-
-        Debug.Log(newPosition);
-    }
-
-    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
-    {
-        if (stream.IsWriting)
-        {
-            stream.SendNext(rectTransform.position);
-            stream.SendNext(rectTransform.rotation);
-        }
-        else
-        {
-            networkPosition = (Vector3)stream.ReceiveNext();
-            networkRotation = (Quaternion)stream.ReceiveNext();
-        }
     }
 }

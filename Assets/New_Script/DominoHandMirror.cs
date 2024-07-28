@@ -77,24 +77,35 @@ public class DominoHandMirror : MonoBehaviourPun
             return false;
         }
 
-        if (playerHands.ContainsKey(playerID) && playerHands[playerID].Contains(domino))
+        if (!playerHands.ContainsKey(playerID))
         {
-            playerHands[playerID].Remove(domino);
-            domino.transform.SetParent(null);
-
-            if (photonView.IsMine)
-            {
-                photonView.RPC("RPC_RemoveFromHand", RpcTarget.Others, playerID, domino.GetComponent<PhotonView>().ViewID);
-            }
-
-            Debug.Log($"Removed domino with ViewID {domino.GetComponent<PhotonView>().ViewID} from player {playerID}'s hand.");
-            return true;
+            Debug.LogError($"RemoveFromHand: Player ID {playerID} does not exist in playerHands dictionary.");
+            return false;
         }
-        else
+
+        if (!playerHands[playerID].Contains(domino))
         {
-            Debug.LogError($"RemoveFromHand: Player {playerID} does not have the specified domino.");
+            Debug.LogError($"RemoveFromHand: Player ID {playerID} does not contain the specified domino.");
+            return false;
         }
-        return false;
+
+        playerHands[playerID].Remove(domino);
+        domino.transform.SetParent(null);
+
+        PhotonView dominoPhotonView = domino.GetComponent<PhotonView>();
+        if (dominoPhotonView == null)
+        {
+            Debug.LogError("RemoveFromHand: Domino does not have a PhotonView component.");
+            return false;
+        }
+
+        if (photonView.IsMine)
+        {
+            photonView.RPC("RPC_RemoveFromHand", RpcTarget.Others, playerID, dominoPhotonView.ViewID);
+        }
+
+        Debug.Log($"Removed domino with ViewID {dominoPhotonView.ViewID} from player {playerID}'s hand.");
+        return true;
     }
 
     [PunRPC]
@@ -107,17 +118,16 @@ public class DominoHandMirror : MonoBehaviourPun
             return;
         }
 
-        if (playerHands.ContainsKey(playerID) && playerHands[playerID].Contains(domino))
+        if (!playerHands.ContainsKey(playerID) || !playerHands[playerID].Contains(domino))
         {
-            playerHands[playerID].Remove(domino);
-            domino.transform.SetParent(null);
+            Debug.LogError($"RPC_RemoveFromHand: Player ID {playerID} does not have the specified domino.");
+            return;
+        }
 
-            Debug.Log($"RPC_RemoveFromHand: Domino with ViewID {dominoViewID} removed from player {playerID}'s hand.");
-        }
-        else
-        {
-            Debug.LogError($"RPC_RemoveFromHand: Player {playerID} does not have the specified domino.");
-        }
+        playerHands[playerID].Remove(domino);
+        domino.transform.SetParent(null);
+
+        Debug.Log($"RPC_RemoveFromHand: Domino with ViewID {dominoViewID} removed from player {playerID}'s hand.");
     }
 
     public void UpdateCardPosition(int dominoViewID, Vector3 position, Quaternion rotation, Vector2Int cellIndex)
